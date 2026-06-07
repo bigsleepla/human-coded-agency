@@ -43,16 +43,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
       setUser(s?.user ?? null);
-      // defer to avoid deadlocks
       setTimeout(() => {
-        loadAgency(s?.user?.id);
+        loadAgency(s?.user ?? null);
       }, 0);
     });
 
     supabase.auth.getSession().then(async ({ data: { session: s } }) => {
       setSession(s);
       setUser(s?.user ?? null);
-      await loadAgency(s?.user?.id);
+      await loadAgency(s?.user ?? null);
       setLoading(false);
     });
 
@@ -64,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     session,
     agency,
     loading,
-    refreshAgency: () => loadAgency(user?.id),
+    refreshAgency: () => loadAgency(user),
     signOut: async () => {
       await supabase.auth.signOut();
       setAgency(null);
