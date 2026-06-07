@@ -11,7 +11,15 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as STokenRouteImport } from './routes/s.$token'
+import { Route as AppTeamRouteImport } from './routes/_app.team'
+import { Route as AppBrowseRouteImport } from './routes/_app.browse'
+import { Route as AppBoardRouteImport } from './routes/_app.board'
+import { Route as AppSubmissionsIndexRouteImport } from './routes/_app.submissions.index'
+import { Route as AppSubmissionsNewRouteImport } from './routes/_app.submissions.new'
+import { Route as AppSubmissionsIdRouteImport } from './routes/_app.submissions.$id'
 
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
@@ -23,40 +31,135 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const STokenRoute = STokenRouteImport.update({
+  id: '/s/$token',
+  path: '/s/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppTeamRoute = AppTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBrowseRoute = AppBrowseRouteImport.update({
+  id: '/browse',
+  path: '/browse',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBoardRoute = AppBoardRouteImport.update({
+  id: '/board',
+  path: '/board',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSubmissionsIndexRoute = AppSubmissionsIndexRouteImport.update({
+  id: '/submissions/',
+  path: '/submissions/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSubmissionsNewRoute = AppSubmissionsNewRouteImport.update({
+  id: '/submissions/new',
+  path: '/submissions/new',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSubmissionsIdRoute = AppSubmissionsIdRouteImport.update({
+  id: '/submissions/$id',
+  path: '/submissions/$id',
+  getParentRoute: () => AppRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/onboarding': typeof OnboardingRoute
+  '/board': typeof AppBoardRoute
+  '/browse': typeof AppBrowseRoute
+  '/team': typeof AppTeamRoute
+  '/s/$token': typeof STokenRoute
+  '/submissions/$id': typeof AppSubmissionsIdRoute
+  '/submissions/new': typeof AppSubmissionsNewRoute
+  '/submissions/': typeof AppSubmissionsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/onboarding': typeof OnboardingRoute
+  '/board': typeof AppBoardRoute
+  '/browse': typeof AppBrowseRoute
+  '/team': typeof AppTeamRoute
+  '/s/$token': typeof STokenRoute
+  '/submissions/$id': typeof AppSubmissionsIdRoute
+  '/submissions/new': typeof AppSubmissionsNewRoute
+  '/submissions': typeof AppSubmissionsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/onboarding': typeof OnboardingRoute
+  '/_app/board': typeof AppBoardRoute
+  '/_app/browse': typeof AppBrowseRoute
+  '/_app/team': typeof AppTeamRoute
+  '/s/$token': typeof STokenRoute
+  '/_app/submissions/$id': typeof AppSubmissionsIdRoute
+  '/_app/submissions/new': typeof AppSubmissionsNewRoute
+  '/_app/submissions/': typeof AppSubmissionsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/onboarding'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/onboarding'
+    | '/board'
+    | '/browse'
+    | '/team'
+    | '/s/$token'
+    | '/submissions/$id'
+    | '/submissions/new'
+    | '/submissions/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/onboarding'
-  id: '__root__' | '/' | '/auth' | '/onboarding'
+  to:
+    | '/'
+    | '/auth'
+    | '/onboarding'
+    | '/board'
+    | '/browse'
+    | '/team'
+    | '/s/$token'
+    | '/submissions/$id'
+    | '/submissions/new'
+    | '/submissions'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/auth'
+    | '/onboarding'
+    | '/_app/board'
+    | '/_app/browse'
+    | '/_app/team'
+    | '/s/$token'
+    | '/_app/submissions/$id'
+    | '/_app/submissions/new'
+    | '/_app/submissions/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
   OnboardingRoute: typeof OnboardingRoute
+  STokenRoute: typeof STokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -75,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -82,14 +192,95 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/s/$token': {
+      id: '/s/$token'
+      path: '/s/$token'
+      fullPath: '/s/$token'
+      preLoaderRoute: typeof STokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/team': {
+      id: '/_app/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof AppTeamRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/browse': {
+      id: '/_app/browse'
+      path: '/browse'
+      fullPath: '/browse'
+      preLoaderRoute: typeof AppBrowseRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/board': {
+      id: '/_app/board'
+      path: '/board'
+      fullPath: '/board'
+      preLoaderRoute: typeof AppBoardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/submissions/': {
+      id: '/_app/submissions/'
+      path: '/submissions'
+      fullPath: '/submissions/'
+      preLoaderRoute: typeof AppSubmissionsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/submissions/new': {
+      id: '/_app/submissions/new'
+      path: '/submissions/new'
+      fullPath: '/submissions/new'
+      preLoaderRoute: typeof AppSubmissionsNewRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/submissions/$id': {
+      id: '/_app/submissions/$id'
+      path: '/submissions/$id'
+      fullPath: '/submissions/$id'
+      preLoaderRoute: typeof AppSubmissionsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppBoardRoute: typeof AppBoardRoute
+  AppBrowseRoute: typeof AppBrowseRoute
+  AppTeamRoute: typeof AppTeamRoute
+  AppSubmissionsIdRoute: typeof AppSubmissionsIdRoute
+  AppSubmissionsNewRoute: typeof AppSubmissionsNewRoute
+  AppSubmissionsIndexRoute: typeof AppSubmissionsIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppBoardRoute: AppBoardRoute,
+  AppBrowseRoute: AppBrowseRoute,
+  AppTeamRoute: AppTeamRoute,
+  AppSubmissionsIdRoute: AppSubmissionsIdRoute,
+  AppSubmissionsNewRoute: AppSubmissionsNewRoute,
+  AppSubmissionsIndexRoute: AppSubmissionsIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
   OnboardingRoute: OnboardingRoute,
+  STokenRoute: STokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
