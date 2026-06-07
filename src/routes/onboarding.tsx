@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
+import { Building2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/onboarding")({
@@ -28,7 +28,6 @@ function OnboardingPage() {
     setBusy(true);
     const cleanReddit = redditUsername.replace(/^u\//i, "").replace(/^\/+/, "").trim();
 
-    // Persist reddit_username on the auth user so future loads can find the agency.
     const { error: metaErr } = await supabase.auth.updateUser({
       data: { reddit_username: cleanReddit },
     });
@@ -38,7 +37,6 @@ function OnboardingPage() {
       return;
     }
 
-    // Reuse an existing agency for this reddit_username, or create one.
     const { data: existing } = await supabase
       .from("agencies")
       .select("*")
@@ -60,7 +58,6 @@ function OnboardingPage() {
       agencyId = created.id;
     }
 
-    // Best-effort membership row (ignore conflicts).
     if (agencyId) {
       await supabase.from("agency_members").insert({
         agency_id: agencyId,
@@ -75,15 +72,25 @@ function OnboardingPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <Card className="w-full max-w-md p-8">
-        <div className="mb-6 space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Tell us about your agency</h1>
-          <p className="text-sm text-muted-foreground">
-            This information appears on submissions and shared links.
-          </p>
+    <div className="relative flex min-h-screen items-center justify-center px-4">
+      <div className="pointer-events-none absolute inset-0 bg-geo-dots opacity-50 [mask-image:radial-gradient(ellipse_at_center,black_10%,transparent_70%)]" />
+      <div className="relative w-full max-w-md">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
+            <Building2 className="h-6 w-6" strokeWidth={2.25} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Tell us about your agency</h1>
+            <p className="text-sm text-muted-foreground">
+              Appears on submissions and shared links.
+            </p>
+          </div>
         </div>
-        <form onSubmit={submit} className="space-y-4">
+
+        <form
+          onSubmit={submit}
+          className="space-y-5 rounded-3xl border border-border bg-card p-6 shadow-sm md:p-8"
+        >
           <div className="space-y-2">
             <Label htmlFor="brand">Brand name</Label>
             <Input
@@ -93,6 +100,7 @@ function OnboardingPage() {
               placeholder="Acme Editorial"
               required
               maxLength={120}
+              className="h-11 rounded-xl"
             />
           </div>
           <div className="space-y-2">
@@ -104,16 +112,17 @@ function OnboardingPage() {
               placeholder="acme_editor"
               required
               maxLength={40}
+              className="h-11 rounded-xl"
             />
             <p className="text-xs text-muted-foreground">
               Without the <code>u/</code> prefix.
             </p>
           </div>
-          <Button type="submit" className="w-full" disabled={busy}>
+          <Button type="submit" className="h-11 w-full" disabled={busy}>
             {busy ? "Saving…" : "Continue"}
           </Button>
         </form>
-      </Card>
+      </div>
     </div>
   );
 }
