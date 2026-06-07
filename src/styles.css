@@ -42,72 +42,42 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/* Warm neutral stone palette with sage accent — minimal but not pure B&W. */
+/* Daylight: warm off-white linen background with sage accent. */
 :root {
   --radius: 0.875rem;
-  --background: oklch(0.22 0.008 75);
-  --foreground: oklch(0.94 0.008 75);
-  --card: oklch(0.26 0.009 75);
-  --card-foreground: oklch(0.95 0.008 75);
-  --popover: oklch(0.26 0.009 75);
-  --popover-foreground: oklch(0.95 0.008 75);
-  --primary: oklch(0.74 0.06 145);
-  --primary-foreground: oklch(0.20 0.01 145);
-  --secondary: oklch(0.30 0.008 75);
-  --secondary-foreground: oklch(0.94 0.008 75);
-  --muted: oklch(0.28 0.008 75);
-  --muted-foreground: oklch(0.68 0.012 75);
-  --accent: oklch(0.34 0.012 75);
-  --accent-foreground: oklch(0.96 0.005 75);
-  --destructive: oklch(0.58 0.16 25);
-  --destructive-foreground: oklch(0.98 0.005 75);
-  --border: oklch(0.32 0.009 75);
-  --input: oklch(0.30 0.009 75);
-  --ring: oklch(0.74 0.06 145);
+  --background: oklch(0.985 0.005 85);
+  --foreground: oklch(0.22 0.012 75);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.012 75);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.22 0.012 75);
+  --primary: oklch(0.46 0.07 150);
+  --primary-foreground: oklch(0.985 0.005 85);
+  --secondary: oklch(0.95 0.008 85);
+  --secondary-foreground: oklch(0.22 0.012 75);
+  --muted: oklch(0.95 0.008 85);
+  --muted-foreground: oklch(0.48 0.012 75);
+  --accent: oklch(0.93 0.012 85);
+  --accent-foreground: oklch(0.22 0.012 75);
+  --destructive: oklch(0.58 0.18 25);
+  --destructive-foreground: oklch(0.985 0.005 85);
+  --border: oklch(0.90 0.008 85);
+  --input: oklch(0.92 0.008 85);
+  --ring: oklch(0.46 0.07 150);
 
-  --heat-cold: oklch(0.60 0.02 230);
-  --heat-low: oklch(0.68 0.10 200);
-  --heat-mid: oklch(0.78 0.13 85);
-  --heat-high: oklch(0.68 0.18 35);
+  --heat-cold: oklch(0.55 0.02 230);
+  --heat-low: oklch(0.50 0.10 220);
+  --heat-mid: oklch(0.62 0.14 75);
+  --heat-high: oklch(0.55 0.18 30);
 
-  --sidebar: oklch(0.19 0.007 75);
-  --sidebar-foreground: oklch(0.92 0.008 75);
-  --sidebar-primary: oklch(0.74 0.06 145);
-  --sidebar-primary-foreground: oklch(0.20 0.01 145);
-  --sidebar-accent: oklch(0.28 0.009 75);
-  --sidebar-accent-foreground: oklch(0.96 0.005 75);
-  --sidebar-border: oklch(0.30 0.009 75);
-  --sidebar-ring: oklch(0.74 0.06 145);
-}
-
-.dark {
-  --background: oklch(0.22 0.008 75);
-  --foreground: oklch(0.94 0.008 75);
-  --card: oklch(0.26 0.009 75);
-  --card-foreground: oklch(0.95 0.008 75);
-  --popover: oklch(0.26 0.009 75);
-  --popover-foreground: oklch(0.95 0.008 75);
-  --primary: oklch(0.74 0.06 145);
-  --primary-foreground: oklch(0.20 0.01 145);
-  --secondary: oklch(0.30 0.008 75);
-  --secondary-foreground: oklch(0.94 0.008 75);
-  --muted: oklch(0.28 0.008 75);
-  --muted-foreground: oklch(0.68 0.012 75);
-  --accent: oklch(0.34 0.012 75);
-  --accent-foreground: oklch(0.96 0.005 75);
-  --destructive: oklch(0.58 0.16 25);
-  --destructive-foreground: oklch(0.98 0.005 75);
-  --border: oklch(0.32 0.009 75);
-  --input: oklch(0.30 0.009 75);
-  --ring: oklch(0.74 0.06 145);
-  --sidebar: oklch(0.19 0.007 75);
-  --sidebar-foreground: oklch(0.92 0.008 75);
-  --sidebar-primary: oklch(0.74 0.06 145);
-  --sidebar-primary-foreground: oklch(0.20 0.01 145);
-  --sidebar-accent: oklch(0.28 0.009 75);
-  --sidebar-accent-foreground: oklch(0.96 0.005 75);
-  --sidebar-border: oklch(0.30 0.009 75);
-  --sidebar-ring: oklch(0.74 0.06 145);
+  --sidebar: oklch(0.97 0.006 85);
+  --sidebar-foreground: oklch(0.30 0.012 75);
+  --sidebar-primary: oklch(0.46 0.07 150);
+  --sidebar-primary-foreground: oklch(0.985 0.005 85);
+  --sidebar-accent: oklch(0.93 0.012 85);
+  --sidebar-accent-foreground: oklch(0.22 0.012 75);
+  --sidebar-border: oklch(0.90 0.008 85);
+  --sidebar-ring: oklch(0.46 0.07 150);
 }
 
 @layer base {
@@ -121,19 +91,18 @@
   }
 }
 
-/* Subtle geometric grid backdrop — minimal but adds interest. */
+/* Subtle geometric backdrops — daylight tones. */
 @utility bg-geo-grid {
   background-image:
-    linear-gradient(to right, color-mix(in oklab, var(--foreground) 5%, transparent) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in oklab, var(--foreground) 5%, transparent) 1px, transparent 1px);
+    linear-gradient(to right, color-mix(in oklab, var(--foreground) 6%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--foreground) 6%, transparent) 1px, transparent 1px);
   background-size: 32px 32px;
 }
 
 @utility bg-geo-dots {
   background-image: radial-gradient(
-    color-mix(in oklab, var(--foreground) 10%, transparent) 1px,
+    color-mix(in oklab, var(--foreground) 12%, transparent) 1px,
     transparent 1px
   );
   background-size: 18px 18px;
 }
-
