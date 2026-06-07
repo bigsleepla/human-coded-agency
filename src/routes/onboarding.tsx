@@ -27,27 +27,48 @@ function OnboardingPage() {
     e.preventDefault();
     setBusy(true);
     const cleanReddit = redditUsername.replace(/^u\//i, "").replace(/^\/+/, "").trim();
-    const { data: created, error } = await supabase
-      .from("agencies")
-      .insert({
-        supabase_user_id: user.id,
-        brand_name: brandName.trim(),
-        reddit_username: cleanReddit,
-      })
-      .select()
-      .single();
-    if (error) {
-      toast.error(error.message);
+
+    // Persist reddit_username on the auth user so future loads can find the agency.
+    const { error: metaErr } = await supabase.auth.updateUser({
+      data: { reddit_username: cleanReddit },
+    });
+    if (metaErr) {
+      toast.error(metaErr.message);
       setBusy(false);
       return;
     }
-    // Create the admin agency_members record (best-effort; ignore conflict).
-    await supabase.from("agency_members").insert({
-      agency_id: created.id,
-      user_id: user.id,
-      role: "admin",
-      email: user.email,
-    });
+
+    // Reuse an existing agency for this reddit_username, or create one.
+    const { data: existing } = await supabase
+      .from("agencies")
+      .select("*")
+      .eq("reddit_username", cleanReddit)
+      .maybeSingle();
+
+    let agencyId = existing?.id as string | undefined;
+    if (!existing) {
+      const { data: created, error } = await supabase
+        .from("agencies")
+        .insert({ brand_name: brandName.trim(), reddit_username: cleanReddit })
+        .select()
+        .single();
+      if (error) {
+        toast.error(error.message);
+        setBusy(false);
+        return;
+      }
+      agencyId = created.id;
+    }
+
+    // Best-effort membership row (ignore conflicts).
+    if (agencyId) {
+      await supabase.from("agency_members").insert({
+        agency_id: agencyId,
+        role: "admin",
+        reddit_username: cleanReddit,
+      });
+    }
+
     await refreshAgency();
     toast.success("Welcome aboard.");
     navigate({ to: "/board" });

@@ -25,15 +25,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [agency, setAgency] = useState<Agency | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const loadAgency = async (uid: string | undefined) => {
-    if (!uid) {
+  const loadAgency = async (u: User | null | undefined) => {
+    const reddit = (u?.user_metadata?.reddit_username as string | undefined)?.trim();
+    if (!u || !reddit) {
       setAgency(null);
       return;
     }
     const { data } = await supabase
       .from("agencies")
       .select("*")
-      .eq("supabase_user_id", uid)
+      .eq("reddit_username", reddit)
       .maybeSingle();
     setAgency((data as Agency) ?? null);
   };
@@ -42,16 +43,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
       setUser(s?.user ?? null);
-      // defer to avoid deadlocks
       setTimeout(() => {
-        loadAgency(s?.user?.id);
+        loadAgency(s?.user ?? null);
       }, 0);
     });
 
     supabase.auth.getSession().then(async ({ data: { session: s } }) => {
       setSession(s);
       setUser(s?.user ?? null);
-      await loadAgency(s?.user?.id);
+      await loadAgency(s?.user ?? null);
       setLoading(false);
     });
 
@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     session,
     agency,
     loading,
-    refreshAgency: () => loadAgency(user?.id),
+    refreshAgency: () => loadAgency(user),
     signOut: async () => {
       await supabase.auth.signOut();
       setAgency(null);
