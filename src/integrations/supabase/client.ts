@@ -17,7 +17,6 @@ export type SubmissionStatus = "draft" | "submitted" | "under_review" | "approve
 
 export interface Agency {
   id: string;
-  supabase_user_id: string;
   brand_name: string;
   reddit_username: string;
 }
