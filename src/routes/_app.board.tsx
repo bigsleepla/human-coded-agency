@@ -15,16 +15,18 @@ import { heatBadgeClass } from "@/lib/heat";
 import { format } from "date-fns";
 import { SlotWorkspace } from "@/components/slot-workspace";
 import { toast } from "sonner";
+import { Eye, Hammer, Send, Archive, GripVertical, Flame, Calendar, Kanban } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/board")({
   component: BoardPage,
 });
 
-const COLUMNS: { stage: Stage; label: string }[] = [
-  { stage: "watching", label: "Watching" },
-  { stage: "in_progress", label: "In Progress" },
-  { stage: "submitted", label: "Submitted" },
-  { stage: "closed", label: "Closed" },
+const COLUMNS: { stage: Stage; label: string; icon: typeof Eye; tone: string }[] = [
+  { stage: "watching", label: "Watching", icon: Eye, tone: "text-sky-700 bg-sky-100" },
+  { stage: "in_progress", label: "In Progress", icon: Hammer, tone: "text-amber-800 bg-amber-100" },
+  { stage: "submitted", label: "Submitted", icon: Send, tone: "text-primary bg-primary/10" },
+  { stage: "closed", label: "Closed", icon: Archive, tone: "text-muted-foreground bg-muted" },
 ];
 
 interface BookmarkRow {
@@ -120,59 +122,77 @@ function BoardPage() {
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-4">
-        <h1 className="text-xl font-semibold">Slot Board</h1>
-        <p className="text-sm text-muted-foreground">
-          Drag cards between columns to update their stage.
-        </p>
-      </div>
-      <DndContext sensors={sensors} onDragEnd={onDragEnd}>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {COLUMNS.map((col) => (
-            <Column key={col.stage} stage={col.stage} label={col.label} count={grouped[col.stage].length}>
-              {grouped[col.stage].map((bm) => (
-                <Card
-                  key={bm.id}
-                  bm={bm}
-                  heat={heatById[bm.slot_id] ?? 0}
-                  onOpen={() => setOpenSlot(bm.slot_id)}
-                />
-              ))}
-              {grouped[col.stage].length === 0 && (
-                <p className="text-center text-xs text-muted-foreground">Nothing here.</p>
-              )}
-            </Column>
-          ))}
+    <div className="relative min-h-full">
+      <div className="pointer-events-none absolute inset-0 bg-geo-grid opacity-50 [mask-image:radial-gradient(ellipse_at_top,black_15%,transparent_65%)]" />
+      <div className="relative p-6 md:p-8">
+        <div className="mb-6 flex items-center gap-4 rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <Kanban className="h-6 w-6" strokeWidth={2.25} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Slot Board</h1>
+            <p className="text-sm text-muted-foreground">
+              Drag cards between columns to update their stage.
+            </p>
+          </div>
         </div>
-      </DndContext>
-      <SlotWorkspace slotId={openSlot} onClose={() => setOpenSlot(null)} />
+
+        <DndContext sensors={sensors} onDragEnd={onDragEnd}>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {COLUMNS.map((col) => (
+              <Column key={col.stage} column={col} count={grouped[col.stage].length}>
+                {grouped[col.stage].map((bm) => (
+                  <Card
+                    key={bm.id}
+                    bm={bm}
+                    heat={heatById[bm.slot_id] ?? 0}
+                    onOpen={() => setOpenSlot(bm.slot_id)}
+                  />
+                ))}
+                {grouped[col.stage].length === 0 && (
+                  <div className="rounded-xl border border-dashed border-border/70 bg-background/40 py-6 text-center text-xs text-muted-foreground">
+                    Nothing here
+                  </div>
+                )}
+              </Column>
+            ))}
+          </div>
+        </DndContext>
+        <SlotWorkspace slotId={openSlot} onClose={() => setOpenSlot(null)} />
+      </div>
     </div>
   );
 }
 
 function Column({
-  stage,
-  label,
+  column,
   count,
   children,
 }: {
-  stage: Stage;
-  label: string;
+  column: (typeof COLUMNS)[number];
   count: number;
   children: React.ReactNode;
 }) {
-  const { isOver, setNodeRef } = useDroppable({ id: stage });
+  const { isOver, setNodeRef } = useDroppable({ id: column.stage });
+  const Icon = column.icon;
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-col gap-2 rounded-lg border border-border bg-card/40 p-3 transition-colors ${
-        isOver ? "border-primary/60 bg-card/70" : ""
-      }`}
+      className={cn(
+        "flex flex-col gap-3 rounded-2xl border bg-card/70 p-4 backdrop-blur-sm transition-all duration-150",
+        isOver ? "border-primary/60 bg-primary/5 shadow-md" : "border-border",
+      )}
     >
-      <div className="mb-1 flex items-center justify-between">
-        <h2 className="text-sm font-medium">{label}</h2>
-        <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">{count}</span>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className={cn("flex h-8 w-8 items-center justify-center rounded-xl", column.tone)}>
+            <Icon className="h-4 w-4" strokeWidth={2.25} />
+          </div>
+          <h2 className="text-sm font-semibold">{column.label}</h2>
+        </div>
+        <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+          {count}
+        </span>
       </div>
       <div className="flex flex-col gap-2">{children}</div>
     </div>
@@ -197,34 +217,45 @@ function Card({
           ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
           : undefined
       }
-      className={`group rounded-md border border-border bg-card p-3 text-sm shadow-sm ${
-        isDragging ? "opacity-60" : ""
-      }`}
+      className={cn(
+        "group rounded-xl border border-border bg-card p-3 text-sm shadow-sm transition-all duration-150 hover:shadow-md",
+        isDragging && "opacity-60 shadow-lg",
+      )}
     >
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-start gap-2">
         <button
-          onClick={onOpen}
-          className="text-left font-medium leading-tight hover:underline"
+          {...listeners}
+          {...attributes}
+          aria-label="Drag"
+          className="-ml-1 mt-0.5 cursor-grab rounded-md p-1 text-muted-foreground/60 hover:bg-muted hover:text-foreground active:cursor-grabbing"
         >
-          {bm.slot?.topic ?? "Untitled"}
+          <GripVertical className="h-4 w-4" />
         </button>
-        <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium ${heatBadgeClass(heat)}`}>
+        <div className="min-w-0 flex-1">
+          <button
+            onClick={onOpen}
+            className="text-left font-medium leading-tight hover:underline"
+          >
+            {bm.slot?.topic ?? "Untitled"}
+          </button>
+          <div className="mt-1 text-xs text-muted-foreground">r/{bm.slot?.subreddit}</div>
+        </div>
+        <span
+          className={cn(
+            "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+            heatBadgeClass(heat),
+          )}
+        >
+          <Flame className="h-3 w-3" />
           {heat}
         </span>
       </div>
-      <div className="mt-1 text-xs text-muted-foreground">r/{bm.slot?.subreddit}</div>
       {bm.slot?.deadline && (
-        <div className="mt-1 text-xs text-muted-foreground">
+        <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+          <Calendar className="h-3 w-3" />
           due {format(new Date(bm.slot.deadline), "MMM d")}
         </div>
       )}
-      <button
-        {...listeners}
-        {...attributes}
-        className="mt-2 w-full cursor-grab rounded bg-muted/40 py-1 text-[10px] text-muted-foreground hover:bg-muted active:cursor-grabbing"
-      >
-        drag
-      </button>
     </div>
   );
 }
