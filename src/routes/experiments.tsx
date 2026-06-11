@@ -368,7 +368,7 @@ function ExperimentsPage() {
     let raf = 0;
     let last = performance.now();
     let t = 0;
-    let lastPoolSig = "";
+    let lastSeedTick = -1;
 
     const render = (now: number) => {
       let dt = (now - last) / 1000;
