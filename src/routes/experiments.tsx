@@ -200,6 +200,10 @@ function ExperimentsPage() {
 
   const quoteAuthorRef = useRef<string>("");
   const quoteSeedTickRef = useRef<number>(0);
+  // Set of characters that appear in the quote — used to give cloud
+  // droplets carrying those glyphs a downward weight so they sink to
+  // the underside (where rain peels off) instead of waiting on chance.
+  const quoteCharSetRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     let cancelled = false;
