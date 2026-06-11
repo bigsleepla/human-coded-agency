@@ -238,9 +238,7 @@ function ExperimentsPage() {
             'Garet, "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif',
         }}
       >
-        <div
-          className="text-[90px]"
-        >
+        <div className="text-[90px] italic">
           <span style={{ marginRight: "6px" }}>|</span>HUMAN
         </div>
         <div
