@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef } from "react";
+import { getQuoteOfTheDay } from "@/lib/quotes.functions";
 
 export const Route = createFileRoute("/experiments")({
   component: ExperimentsPage,
@@ -41,6 +43,9 @@ type Droplet = {
   rotVel: number;
   edge: number; // 0 = core, 1 = outer fringe — loosens cohesion + fades alpha
   tendril?: Tendril;
+  // Rain droplets break away from the cloud and free-fall with gravity.
+  falling?: boolean;
+  baseAlpha?: number;
 };
 
 type Cloud = {
@@ -49,7 +54,11 @@ type Cloud = {
   vx: number; // wind velocity
   vy: number;
   radius: number; // for wrap bookkeeping
+  slowed: boolean; // true once cloud has blown into ~40% of the page
+  rainIndex: number; // next character of the quote to drop
+  rainTimer: number; // seconds accumulator for drop cadence
 };
+
 
 const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
@@ -174,6 +183,24 @@ function seedCloud(
 
 function ExperimentsPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fetchQuote = useServerFn(getQuoteOfTheDay);
+  const quoteRef = useRef<string>(
+    "HUMAN INTELLIGENCE AND CREATIVITY ARE UNIQUELY OURS",
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchQuote({ data: { category: "inspire" } })
+      .then((q) => {
+        if (cancelled) return;
+        const txt = `${q.quote} — ${q.author}`.toUpperCase();
+        quoteRef.current = txt.replace(/\s+/g, " ").trim();
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchQuote]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -208,6 +235,9 @@ function ExperimentsPage() {
         vx: -(6 + Math.random() * 28),
         vy: (Math.random() - 0.5) * 4,
         radius: 0,
+        slowed: false,
+        rainIndex: 0,
+        rainTimer: 0,
       };
       seedCloud(i, cloud, droplets, scale);
       clouds.push(cloud);
@@ -246,15 +276,22 @@ function ExperimentsPage() {
           c.ay = 90 + Math.random() * Math.max(60, height * 0.18);
           c.vx = -(6 + Math.random() * 28);
           c.vy = (Math.random() - 0.5) * 4;
-          // teleport droplets so they don't streak across the screen
+          c.slowed = false;
+          c.rainIndex = 0;
+          c.rainTimer = 0;
+          // teleport non-falling droplets so they don't streak across the screen
           for (const d of droplets) {
-            if (d.cloud === clouds.indexOf(c)) {
+            if (d.cloud === clouds.indexOf(c) && !d.falling) {
               d.x = c.ax + d.hx;
               d.y = c.ay + d.hy;
               d.vx = 0;
               d.vy = 0;
             }
           }
+        }
+        // Cloud has blown into ~40% of the page → slow it down and start raining.
+        if (!c.slowed && c.ax < width * 0.6) {
+          c.slowed = true;
         }
       }
 
@@ -290,12 +327,62 @@ function ExperimentsPage() {
             }
           }
         }
-        // Keep clouds drifting leftward overall and stay near the top band.
+        // Keep clouds drifting leftward; once "slowed" they nearly stall so
+        // the rain falls from a near-stationary cloud body.
         const c = clouds[i];
-        c.vx += (-14 - c.vx) * 0.02 * dt * 5;
+        const targetVx = c.slowed ? -1.5 : -14;
+        c.vx += (targetVx - c.vx) * 0.02 * dt * 5;
         const targetY = 110 + (i % 2) * 40;
         c.vy += (targetY - c.ay) * 0.002;
         c.vy *= Math.exp(-0.6 * dt);
+
+        // Rain spawning: once slowed, drip the quote characters in sequence
+        // from random core droplets of this cloud.
+        if (c.slowed) {
+          c.rainTimer += dt;
+          const interval = 0.07; // seconds between drops per cloud
+          while (c.rainTimer >= interval) {
+            c.rainTimer -= interval;
+            const quote = quoteRef.current;
+            if (!quote.length) break;
+            // Pick a core (non-tendril, non-falling, low-edge) droplet of this cloud.
+            const cloudIdx = i;
+            const candidates: number[] = [];
+            for (let di = 0; di < droplets.length; di++) {
+              const dd = droplets[di];
+              if (dd.cloud === cloudIdx && !dd.tendril && !dd.falling && dd.edge < 0.6) {
+                candidates.push(di);
+              }
+            }
+            if (!candidates.length) break;
+            const src = droplets[candidates[Math.floor(Math.random() * candidates.length)]];
+            let ch = quote[c.rainIndex % quote.length];
+            c.rainIndex++;
+            // Skip spaces so we don't drop invisible characters.
+            let guard = 0;
+            while (ch === " " && guard++ < 8) {
+              ch = quote[c.rainIndex % quote.length];
+              c.rainIndex++;
+            }
+            droplets.push({
+              x: src.x,
+              y: src.y,
+              vx: (Math.random() - 0.5) * 20,
+              vy: 20 + Math.random() * 30,
+              hx: 0,
+              hy: 0,
+              cloud: cloudIdx,
+              char: ch,
+              size: 18 + Math.random() * 10,
+              alpha: 0.95,
+              baseAlpha: 0.95,
+              rot: 0,
+              rotVel: 0,
+              edge: 0,
+              falling: true,
+            });
+          }
+        }
       }
 
       // Build spatial hash
@@ -359,9 +446,55 @@ function ExperimentsPage() {
       }
 
       // Integrate
+      const GRAVITY = 620; // px/s^2 — rain accelerates as it falls
       for (let i = 0; i < droplets.length; i++) {
         const d = droplets[i];
         const c = clouds[d.cloud];
+
+        if (d.falling) {
+          // Free-falling rain: no cohesion, no cloud wind, gravity-driven,
+          // but still participates in fluid repulsion/viscosity via ax/ay.
+          let axi = ax[i];
+          let ayi = ay[i] + GRAVITY;
+          // Mild lateral turbulence for organic streaks.
+          axi += Math.sin(d.y * 0.02 + t * 1.3 + d.cloud) * 20;
+
+          d.vx += axi * dt;
+          d.vy += ayi * dt;
+
+          if (wSum[i] > 0) {
+            const avgVx = vxAvg[i] / wSum[i];
+            const avgVy = vyAvg[i] / wSum[i];
+            // Weaker viscosity blend so drops keep their momentum.
+            d.vx += (avgVx - d.vx) * 0.06;
+            d.vy += (avgVy - d.vy) * 0.06;
+          }
+
+          // Very light damping — air resistance, but momentum dominates.
+          const damp = Math.exp(-0.15 * dt);
+          d.vx *= damp;
+          d.vy *= damp;
+
+          d.x += d.vx * dt;
+          d.y += d.vy * dt;
+
+          // Rotate with motion so characters tumble as they fall.
+          const targetRot = Math.atan2(d.vy, d.vx) - Math.PI / 2;
+          let diff = targetRot - d.rot;
+          while (diff > Math.PI) diff -= 2 * Math.PI;
+          while (diff < -Math.PI) diff += 2 * Math.PI;
+          d.rotVel += diff * 1.2 * dt;
+          d.rotVel *= Math.exp(-ROT_DAMP * dt);
+          d.rot += d.rotVel * dt;
+
+          // Fade near the bottom so removal isn't abrupt.
+          const base = d.baseAlpha ?? 0.95;
+          const fadeStart = height - 120;
+          d.alpha = d.y > fadeStart
+            ? base * Math.max(0, 1 - (d.y - fadeStart) / 120)
+            : base;
+          continue;
+        }
 
         // Cohesion: spring back toward home offset. Edge droplets are
         // bound far more loosely — they trail off as vapor, get caught up
@@ -446,6 +579,15 @@ function ExperimentsPage() {
         d.rotVel *= Math.exp(-ROT_DAMP * dt);
         d.rot += d.rotVel * dt;
       }
+
+      // Cull rain that has fallen off the bottom of the screen.
+      for (let i = droplets.length - 1; i >= 0; i--) {
+        const d = droplets[i];
+        if (d.falling && d.y > height + 40) {
+          droplets.splice(i, 1);
+        }
+      }
+
 
       // Render
       ctx.clearRect(0, 0, width, height);
