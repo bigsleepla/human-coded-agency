@@ -169,7 +169,7 @@ function seedCloud(
         hy: rootY + jitterY,
         cloud: cloudIndex,
         char: CHARS[Math.floor(Math.random() * CHARS.length)],
-        size: (18 + Math.random() * 18) * scale * (1 - tt * 0.45),
+        size: (14 + Math.random() * 12) * scale * (1 - tt * 0.6),
         alpha: Math.min(0.85, Math.max(0.04, alpha)),
         rot: (Math.random() - 0.5) * Math.PI,
         rotVel: (Math.random() - 0.5) * 0.4,
