@@ -131,10 +131,11 @@ function ExperimentsPage() {
     for (let i = 0; i < cloudCount; i++) {
       const scale = 0.8 + Math.random() * 0.55;
       const cloud: Cloud = {
-        ax: width + 200 + i * (380 + Math.random() * 220),
+        ax: width + 200 + i * (320 + Math.random() * 260),
         ay: 90 + Math.random() * Math.max(60, height * 0.18),
-        vx: -(10 + Math.random() * 12),
-        vy: 0,
+        // Wider speed spread so faster clouds overtake slower ones and collide.
+        vx: -(6 + Math.random() * 28),
+        vy: (Math.random() - 0.5) * 4,
         radius: 0,
       };
       seedCloud(i, cloud, droplets, scale);
