@@ -234,7 +234,7 @@ function ExperimentsPage() {
       <img
         src={icon.url}
         alt="Human-Coded"
-        className="absolute top-4 left-4 z-10 h-12 w-auto select-none pointer-events-none"
+        className="absolute top-4 left-4 z-10 h-[72px] w-auto select-none pointer-events-none"
       />
       <canvas
         ref={canvasRef}
