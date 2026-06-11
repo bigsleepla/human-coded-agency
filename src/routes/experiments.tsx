@@ -135,7 +135,7 @@ function seedCloud(
   // Seed 2-4 long tendrils per cloud. Each is a chain of droplets that
   // anchor at a point on the cloud body and trail behind the cloud (the
   // strand direction is computed at runtime from the cloud's velocity).
-  const strandCount = 2 + Math.floor(Math.random() * 3);
+  const strandCount = 1 + Math.floor(Math.random() * 2);
   for (let s = 0; s < strandCount; s++) {
     // Root somewhere on the silhouette — sample one of the blobs and pick
     // a point near its rim so the tendril emerges from a visible lobe.
@@ -145,11 +145,11 @@ function seedCloud(
     const rootX = blob.x + Math.cos(rootAngle) * rootRadius;
     const rootY = blob.y + Math.sin(rootAngle) * rootRadius * 0.65;
 
-    const length = (180 + Math.random() * 260) * scale;
-    const beadCount = 14 + Math.floor(Math.random() * 14);
+    const length = (70 + Math.random() * 90) * scale;
+    const beadCount = 6 + Math.floor(Math.random() * 6);
     const waveFreq = 1.2 + Math.random() * 2.2;
     const wavePhase = Math.random() * Math.PI * 2;
-    const waveAmp = (10 + Math.random() * 26) * scale;
+    const waveAmp = (6 + Math.random() * 14) * scale;
 
     for (let i = 0; i < beadCount; i++) {
       // Slight clustering toward the root so the strand thins to a wisp.
