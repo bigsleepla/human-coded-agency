@@ -165,7 +165,7 @@ function AboutPage() {
             </span>
           </div>
         </section>
-      </main>
-    </div>
+    </PageShell>
   );
+}
 }
