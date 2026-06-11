@@ -112,26 +112,31 @@ function ExperimentsPage() {
     let last = performance.now();
     let t = 0;
 
-    // Drift in from top-right toward lower-left, then gently traverse.
-    // Start off-canvas top-right.
-    const startX = () => width + 350;
-    const startY = () => -250;
+    // Drift in continuously from off top-right toward the upper-left area.
+    const startX = () => width + 400;
+    const startY = () => -300;
     let cloudX = startX();
     let cloudY = startY();
+    // constant slow velocity (px/sec) — gentle diagonal drift into frame
+    const vx = -14;
+    const vy = 9;
 
     const render = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       t += dt;
 
-      // Target: settle near the top of the screen, drift slowly left
-      const targetX = width * 0.35 - t * 1.5;
-      const targetY = height * 0.22 + Math.sin(t * 0.15) * 10;
+      // Constant-velocity drift; gentle vertical bob layered on top.
+      cloudX += vx * dt;
+      cloudY += vy * dt;
 
-      // Very gentle easing for a slow, heavy feel
-      const ease = 1 - Math.exp(-dt * 0.28);
-      cloudX += (targetX - cloudX) * ease;
-      cloudY += (targetY - cloudY) * ease;
+      // Once it's drifted well past the left edge, wrap back to top-right.
+      if (cloudX < -width * 0.6) {
+        cloudX = startX();
+        cloudY = startY();
+      }
+
+      const bobY = Math.sin(t * 0.15) * 8;
 
       ctx.clearRect(0, 0, width, height);
       ctx.textBaseline = "middle";
@@ -145,7 +150,7 @@ function ExperimentsPage() {
         const driftY = Math.cos(t * p.driftFreqY + p.driftPhaseY) * p.driftAmpY;
 
         const x = cloudX + p.ox + driftX;
-        const y = cloudY + p.oy + bob + driftY;
+        const y = cloudY + p.oy + bob + bobY + driftY;
 
         const rotation =
           p.rot +
@@ -157,7 +162,8 @@ function ExperimentsPage() {
         ctx.rotate(rotation);
         ctx.globalAlpha = p.alpha;
         ctx.fillStyle = fg;
-        ctx.font = `${p.size.toFixed(1)}px Arial, sans-serif`;
+        ctx.font = `bold ${p.size.toFixed(1)}px Arial, sans-serif`;
+
         ctx.fillText(p.char, 0, 0);
         ctx.restore();
       }
