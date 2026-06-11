@@ -7,7 +7,7 @@ export function SiteNav() {
   return (
     <nav
       aria-label="Primary"
-      className="absolute z-20 top-10 h-[76px] md:h-[114px] lg:h-[171px] left-[calc(50%+100px)] md:left-[calc(50%+140px)] lg:left-[calc(50%+200px)] -translate-x-1/2 flex flex-wrap items-end gap-x-6 gap-y-2"
+      className="absolute z-20 top-10 right-10 flex flex-wrap items-center gap-x-6 gap-y-2"
       style={{
         fontFamily:
           'Garet, "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif',
