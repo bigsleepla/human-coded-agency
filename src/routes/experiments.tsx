@@ -486,8 +486,6 @@ function ExperimentsPage() {
               }
             }
             const pick = droplets[pickIdx];
-            const pick =
-              droplets[matches[Math.floor(Math.random() * matches.length)]];
             const slot = slots[nextSlot++];
             pick.falling = true;
             pick.targetX = slot.x;
