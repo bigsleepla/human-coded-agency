@@ -183,6 +183,24 @@ function seedCloud(
 
 function ExperimentsPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fetchQuote = useServerFn(getQuoteOfTheDay);
+  const quoteRef = useRef<string>(
+    "HUMAN INTELLIGENCE AND CREATIVITY ARE UNIQUELY OURS",
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchQuote({ data: { category: "inspire" } })
+      .then((q) => {
+        if (cancelled) return;
+        const txt = `${q.quote} — ${q.author}`.toUpperCase();
+        quoteRef.current = txt.replace(/\s+/g, " ").trim();
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchQuote]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
