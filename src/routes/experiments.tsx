@@ -485,7 +485,7 @@ function ExperimentsPage() {
     >
       <div
         aria-label="Human-Coded"
-        className="absolute top-4 left-4 z-10 select-none pointer-events-none font-normal leading-[0.95] tracking-tight text-foreground"
+        className="absolute top-4 left-4 z-10 select-none pointer-events-none font-normal leading-[0.95] tracking-tight text-white"
         style={{
           fontFamily:
             'Garet, "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif',
