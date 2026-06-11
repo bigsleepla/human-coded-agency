@@ -13,6 +13,9 @@ export function SiteNav() {
           'Garet, "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif',
       }}
     >
+      <Link to="/home" className={linkClass}>
+        Home
+      </Link>
       <Link to="/auth" className={linkClass}>
         Portal
       </Link>

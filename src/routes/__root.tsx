@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
+  Link,
   Outlet,
   createRootRouteWithContext,
   HeadContent,
@@ -30,8 +31,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: () => (
-    <div className="flex min-h-screen items-center justify-center">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4">
       <p className="text-muted-foreground">Page not found.</p>
+      <Link to="/home" className="text-primary hover:underline">Return to home page</Link>
     </div>
   ),
 });
