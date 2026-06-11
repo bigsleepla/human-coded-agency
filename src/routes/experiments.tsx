@@ -492,17 +492,15 @@ function ExperimentsPage() {
         const c = clouds[i];
         const targetVx = c.slowed ? -1.5 : -14;
         c.vx += (targetVx - c.vx) * 0.02 * dt * 5;
-        const targetY = 90 + (i % 2) * 30;
-        c.vy += (targetY - c.ay) * 0.01;
-        c.vy *= Math.exp(-1.6 * dt);
-        // Hard ceiling/floor — the cloud bodies stay anchored near the
-        // top of the canvas regardless of how their droplets churn.
-        if (c.ay < 70) {
-          c.ay = 70;
+        const targetY = 80 + (i % 2) * 25;
+        c.vy += (targetY - c.ay) * 0.02;
+        c.vy *= Math.exp(-2.4 * dt);
+        if (c.ay < 60) {
+          c.ay = 60;
           if (c.vy < 0) c.vy = 0;
         }
-        if (c.ay > 180) {
-          c.ay = 180;
+        if (c.ay > 140) {
+          c.ay = 140;
           if (c.vy > 0) c.vy = 0;
         }
 
