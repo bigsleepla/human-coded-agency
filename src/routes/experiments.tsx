@@ -189,9 +189,14 @@ function seedCloud(
 function ExperimentsPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fetchQuote = useServerFn(getQuoteOfTheDay);
-  const quoteRef = useRef<string>(
-    "HUMAN INTELLIGENCE AND CREATIVITY ARE UNIQUELY OURS",
-  );
+  const quoteRef = useRef<string>("");
+  const quoteReadyRef = useRef<boolean>(false);
+  // Pool of characters the clouds are allowed to materialize as. Starts
+  // with the alphabet so clouds look populated immediately, then narrows
+  // to the actual quote characters once the quote is fetched (so every
+  // glyph in the quote — including punctuation — can plausibly appear in
+  // a cloud and be claimed when its slot needs to be filled).
+  const charPoolRef = useRef<string[]>(CHARS.split(""));
 
   useEffect(() => {
     let cancelled = false;
@@ -200,6 +205,18 @@ function ExperimentsPage() {
         if (cancelled) return;
         const txt = `${q.quote} — ${q.author}`.toUpperCase();
         quoteRef.current = txt.replace(/\s+/g, " ").trim();
+        // Build a char pool weighted by the quote's letter frequency so
+        // that common letters appear more often in clouds — increasing
+        // the odds of matches without making it deterministic.
+        const pool: string[] = [];
+        for (const ch of quoteRef.current) {
+          if (ch !== " ") pool.push(ch);
+        }
+        // Sprinkle in a few extra alphabet chars so clouds still look
+        // varied and not just a re-shuffling of the quote.
+        for (const ch of CHARS) pool.push(ch);
+        charPoolRef.current = pool;
+        quoteReadyRef.current = true;
       })
       .catch(() => {});
     return () => {
@@ -331,12 +348,45 @@ function ExperimentsPage() {
     let raf = 0;
     let last = performance.now();
     let t = 0;
+    let lastPoolSig = "";
 
     const render = (now: number) => {
       let dt = (now - last) / 1000;
       last = now;
       if (dt > 0.05) dt = 0.05;
       t += dt;
+
+      // When the quote arrives (or changes), re-roll every cloud droplet's
+      // char from the quote-weighted pool so matches become possible.
+      const poolSig = `${charPoolRef.current.length}|${quoteRef.current}`;
+      if (poolSig !== lastPoolSig) {
+        lastPoolSig = poolSig;
+        const pool = charPoolRef.current;
+        if (pool.length) {
+          for (const d of droplets) {
+            if (!d.falling) {
+              d.char = pool[Math.floor(Math.random() * pool.length)];
+            }
+          }
+        }
+      }
+
+      // Cloud shimmer: each frame, re-roll a small fraction of cloud
+      // droplets' chars. This is what makes formation speed *random* —
+      // a slot waits until the cloud happens to roll the needed glyph.
+      if (charPoolRef.current.length) {
+        const pool = charPoolRef.current;
+        const shimmerRate = 0.6; // ~60% of droplets re-roll per second
+        const k = Math.max(1, Math.floor(droplets.length * shimmerRate * dt));
+        for (let n = 0; n < k; n++) {
+          const idx = Math.floor(Math.random() * droplets.length);
+          const d = droplets[idx];
+          if (!d.falling && !d.tendril) {
+            d.char = pool[Math.floor(Math.random() * pool.length)];
+          }
+        }
+      }
+
 
       // Advance cloud anchors (wind) and wrap.
       for (const c of clouds) {
@@ -407,47 +457,49 @@ function ExperimentsPage() {
         c.vy += (targetY - c.ay) * 0.002;
         c.vy *= Math.exp(-0.6 * dt);
 
-        // Rain spawning: once slowed, drip the quote characters from this
-        // cloud, each assigned to the next empty slot in the laid-out quote.
-        if (c.slowed) {
+        // Rain spawning: once slowed, wait for one of this cloud's own
+        // droplets to happen to display the character needed by the next
+        // empty slot — then peel that droplet off the cloud and let it
+        // fall into place. Cloud droplets shimmer (re-roll their char)
+        // each frame, so the speed at which the quote forms depends on
+        // how often the cloud rolls the right glyphs.
+        if (c.slowed && quoteReadyRef.current) {
           c.rainTimer += dt;
-          const interval = 0.06; // seconds between drops per cloud
+          const interval = 0.05; // how often we *attempt* a claim
           while (c.rainTimer >= interval) {
             c.rainTimer -= interval;
             ensureSlots();
             if (nextSlot >= slots.length) break;
-            // Pick a core (non-tendril, non-falling, low-edge) droplet of
-            // this cloud as the visual source of the drop.
+            const needed = slots[nextSlot].char;
             const cloudIdx = i;
-            const candidates: number[] = [];
+            const matches: number[] = [];
             for (let di = 0; di < droplets.length; di++) {
               const dd = droplets[di];
-              if (dd.cloud === cloudIdx && !dd.tendril && !dd.falling && dd.edge < 0.6) {
-                candidates.push(di);
+              if (
+                dd.cloud === cloudIdx &&
+                !dd.tendril &&
+                !dd.falling &&
+                dd.char === needed &&
+                dd.edge < 0.75
+              ) {
+                matches.push(di);
               }
             }
-            if (!candidates.length) break;
-            const src = droplets[candidates[Math.floor(Math.random() * candidates.length)]];
+            if (!matches.length) break; // no match yet — wait for shimmer
+            const pick =
+              droplets[matches[Math.floor(Math.random() * matches.length)]];
             const slot = slots[nextSlot++];
-            droplets.push({
-              x: src.x,
-              y: src.y,
-              vx: (Math.random() - 0.5) * 20,
-              vy: 20 + Math.random() * 30,
-              hx: 0,
-              hy: 0,
-              cloud: cloudIdx,
-              char: slot.char,
-              size: slotFontSize,
-              alpha: 0.95,
-              baseAlpha: 1,
-              rot: (Math.random() - 0.5) * 0.6,
-              rotVel: (Math.random() - 0.5) * 2,
-              edge: 0,
-              falling: true,
-              targetX: slot.x,
-              targetY: slot.y,
-            });
+            pick.falling = true;
+            pick.targetX = slot.x;
+            pick.targetY = slot.y;
+            pick.size = slotFontSize;
+            pick.baseAlpha = 1;
+            pick.alpha = 1;
+            pick.edge = 0;
+            pick.vx = (Math.random() - 0.5) * 20;
+            pick.vy = 20 + Math.random() * 30;
+            pick.rot = (Math.random() - 0.5) * 0.6;
+            pick.rotVel = (Math.random() - 0.5) * 2;
           }
         }
       }
