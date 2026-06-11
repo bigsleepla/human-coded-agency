@@ -6,18 +6,24 @@ export const Route = createFileRoute("/experiments")({
 });
 
 type Particle = {
-  // position relative to cloud center
   ox: number;
   oy: number;
   // bobbing
   phase: number;
   freq: number;
   amp: number;
-  // drift within cloud
-  dx: number;
-  dy: number;
-  driftPhase: number;
-  driftFreq: number;
+  // local fluid drift
+  driftPhaseX: number;
+  driftPhaseY: number;
+  driftFreqX: number;
+  driftFreqY: number;
+  driftAmpX: number;
+  driftAmpY: number;
+  // rotation
+  rot: number;
+  rotSpeed: number;
+  rotPhase: number;
+  rotAmp: number;
   char: string;
   size: number;
   alpha: number;
@@ -40,48 +46,51 @@ function ExperimentsPage() {
 
     const particles: Particle[] = [];
 
-    // Build a cloud shape via several overlapping "blobs" (denser/lighter patches)
-    const PARTICLE_COUNT = 320;
+    // Cloud built from overlapping blobs — denser core, lighter wisps.
+    const PARTICLE_COUNT = 340;
     const blobs = [
-      { x: -180, y: -20, r: 140, weight: 1.0 },   // dense core
-      { x: 60, y: -60, r: 160, weight: 0.9 },     // dense
+      { x: -180, y: -20, r: 140, weight: 1.0 },
+      { x: 60, y: -60, r: 160, weight: 0.9 },
       { x: 200, y: 10, r: 130, weight: 0.7 },
       { x: -40, y: 40, r: 180, weight: 0.85 },
-      { x: -260, y: 60, r: 110, weight: 0.5 },    // lighter edge
-      { x: 280, y: 80, r: 120, weight: 0.45 },    // lighter edge
+      { x: -260, y: 60, r: 110, weight: 0.5 },
+      { x: 280, y: 80, r: 120, weight: 0.45 },
       { x: 0, y: -110, r: 100, weight: 0.6 },
     ];
     const totalWeight = blobs.reduce((s, b) => s + b.weight, 0);
 
     for (let i = 0; i < PARTICLE_COUNT; i++) {
-      // pick a blob weighted
       let r = Math.random() * totalWeight;
       let chosen = blobs[0];
       for (const b of blobs) {
         r -= b.weight;
         if (r <= 0) { chosen = b; break; }
       }
-      // gaussian-ish placement (denser at center)
       const u = (Math.random() + Math.random() + Math.random()) / 3;
       const radius = u * chosen.r;
       const angle = Math.random() * Math.PI * 2;
       const ox = chosen.x + Math.cos(angle) * radius;
-      const oy = chosen.y + Math.sin(angle) * radius * 0.7; // flatter cloud
+      const oy = chosen.y + Math.sin(angle) * radius * 0.75;
 
-      // density-based alpha — center denser/darker
       const distNorm = radius / chosen.r;
-      const alpha = (1 - distNorm * 0.7) * (0.35 + chosen.weight * 0.55);
+      const alpha = (1 - distNorm * 0.65) * (0.3 + chosen.weight * 0.6);
 
       particles.push({
         ox,
         oy,
         phase: Math.random() * Math.PI * 2,
-        freq: 0.3 + Math.random() * 0.5,
+        freq: 0.25 + Math.random() * 0.45,
         amp: 2 + Math.random() * 5,
-        dx: 0,
-        dy: 0,
-        driftPhase: Math.random() * Math.PI * 2,
-        driftFreq: 0.1 + Math.random() * 0.25,
+        driftPhaseX: Math.random() * Math.PI * 2,
+        driftPhaseY: Math.random() * Math.PI * 2,
+        driftFreqX: 0.15 + Math.random() * 0.35,
+        driftFreqY: 0.12 + Math.random() * 0.3,
+        driftAmpX: 6 + Math.random() * 14,
+        driftAmpY: 4 + Math.random() * 10,
+        rot: (Math.random() - 0.5) * Math.PI,
+        rotSpeed: (Math.random() - 0.5) * 0.25, // slow constant tumble
+        rotPhase: Math.random() * Math.PI * 2,
+        rotAmp: 0.15 + Math.random() * 0.5,    // oscillation amplitude (radians)
         char: CHARS[Math.floor(Math.random() * CHARS.length)],
         size: 10 + Math.random() * 10,
         alpha: Math.min(0.95, Math.max(0.08, alpha)),
@@ -103,39 +112,55 @@ function ExperimentsPage() {
     let last = performance.now();
     let t = 0;
 
-    // cloud-center motion: slow horizontal traverse with gentle vertical bob
-    const traverseSpeed = 18; // px/s — slow
-    let cloudX = -200; // start off-screen left
+    // Drift in from top-right toward lower-left, then gently traverse.
+    // Start off-canvas top-right.
+    const startX = () => width + 350;
+    const startY = () => -250;
+    let cloudX = startX();
+    let cloudY = startY();
 
     const render = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       t += dt;
 
-      cloudX += traverseSpeed * dt;
-      // wrap to the left once it fully exits the right side
-      const cloudHalfWidth = 500;
-      if (cloudX > width + cloudHalfWidth) cloudX = -cloudHalfWidth;
-      const cloudY = height / 2 + Math.sin(t * 0.35) * 12;
+      // Target: settle around middle-left, then very slowly continue drifting
+      // diagonally. Use easing toward a moving target for a fluid feel.
+      const targetX = width * 0.42 - t * 6;   // slow continued drift left
+      const targetY = height * 0.5 + Math.sin(t * 0.25) * 18;
+
+      // Critically-damped-ish lerp
+      const ease = 1 - Math.exp(-dt * 0.45);
+      cloudX += (targetX - cloudX) * ease;
+      cloudY += (targetY - cloudY) * ease;
 
       ctx.clearRect(0, 0, width, height);
-      ctx.font = "";
       ctx.textBaseline = "middle";
       ctx.textAlign = "center";
+      const fg = getComputedStyle(canvas).color || "#111";
 
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
         const bob = Math.sin(t * p.freq + p.phase) * p.amp;
-        const driftX = Math.sin(t * p.driftFreq + p.driftPhase) * 6;
-        const driftY = Math.cos(t * p.driftFreq * 0.8 + p.driftPhase) * 4;
+        const driftX = Math.sin(t * p.driftFreqX + p.driftPhaseX) * p.driftAmpX;
+        const driftY = Math.cos(t * p.driftFreqY + p.driftPhaseY) * p.driftAmpY;
 
         const x = cloudX + p.ox + driftX;
         const y = cloudY + p.oy + bob + driftY;
 
+        const rotation =
+          p.rot +
+          p.rotSpeed * t +
+          Math.sin(t * (p.driftFreqX * 0.8) + p.rotPhase) * p.rotAmp;
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(rotation);
         ctx.globalAlpha = p.alpha;
-        ctx.fillStyle = "hsl(var(--foreground))";
+        ctx.fillStyle = fg;
         ctx.font = `${p.size.toFixed(1)}px Arial, sans-serif`;
-        ctx.fillText(p.char, x, y);
+        ctx.fillText(p.char, 0, 0);
+        ctx.restore();
       }
       ctx.globalAlpha = 1;
 
@@ -150,7 +175,7 @@ function ExperimentsPage() {
   }, []);
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem)] bg-background">
+    <div className="min-h-[calc(100vh-3.5rem)] bg-background text-foreground">
       <canvas
         ref={canvasRef}
         className="block w-full h-[calc(100vh-3.5rem)]"
