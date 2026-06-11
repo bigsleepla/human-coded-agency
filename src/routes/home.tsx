@@ -1,7 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef } from "react";
 import { getQuoteOfTheDay } from "@/lib/quotes.functions";
+import { CookieBanner } from "@/components/cookie-banner";
+import { SiteNav } from "@/components/site-nav";
 
 export const Route = createFileRoute("/home")({
   component: ExperimentsPage,
