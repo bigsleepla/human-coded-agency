@@ -189,9 +189,14 @@ function seedCloud(
 function ExperimentsPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fetchQuote = useServerFn(getQuoteOfTheDay);
-  const quoteRef = useRef<string>(
-    "HUMAN INTELLIGENCE AND CREATIVITY ARE UNIQUELY OURS",
-  );
+  const quoteRef = useRef<string>("");
+  const quoteReadyRef = useRef<boolean>(false);
+  // Pool of characters the clouds are allowed to materialize as. Starts
+  // with the alphabet so clouds look populated immediately, then narrows
+  // to the actual quote characters once the quote is fetched (so every
+  // glyph in the quote — including punctuation — can plausibly appear in
+  // a cloud and be claimed when its slot needs to be filled).
+  const charPoolRef = useRef<string[]>(CHARS.split(""));
 
   useEffect(() => {
     let cancelled = false;
@@ -200,6 +205,18 @@ function ExperimentsPage() {
         if (cancelled) return;
         const txt = `${q.quote} — ${q.author}`.toUpperCase();
         quoteRef.current = txt.replace(/\s+/g, " ").trim();
+        // Build a char pool weighted by the quote's letter frequency so
+        // that common letters appear more often in clouds — increasing
+        // the odds of matches without making it deterministic.
+        const pool: string[] = [];
+        for (const ch of quoteRef.current) {
+          if (ch !== " ") pool.push(ch);
+        }
+        // Sprinkle in a few extra alphabet chars so clouds still look
+        // varied and not just a re-shuffling of the quote.
+        for (const ch of CHARS) pool.push(ch);
+        charPoolRef.current = pool;
+        quoteReadyRef.current = true;
       })
       .catch(() => {});
     return () => {
