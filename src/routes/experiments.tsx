@@ -249,59 +249,77 @@ function ExperimentsPage() {
     // Slot layout: each glyph of the quote has a fixed (x, y) "home" at the
     // bottom of the canvas. Rain droplets are assigned slots in order and
     // steer/land into them, assembling the quote as they fall.
-    type Slot = { x: number; y: number; char: string };
+    type Slot = { x: number; y: number; char: string; claimed: boolean };
     let slots: Slot[] = [];
-    let nextSlot = 0;
     let slotsSig = "";
     let slotFontSize = 24;
 
     const layoutQuote = (): Slot[] => {
       const quote = quoteRef.current;
+      const author = quoteAuthorRef.current;
       if (!quote) return [];
-      const fontSize = Math.max(16, Math.min(30, width / 48));
+      // Responsive sizing: scales with viewport width with sensible
+      // floor/ceiling so it stays legible on phones and tasteful on desktops.
+      const fontSize = Math.max(
+        13,
+        Math.min(30, Math.min(width / 28, height / 28)),
+      );
       slotFontSize = fontSize;
-      const lineHeight = fontSize * 1.45;
-      const maxW = width * 0.82;
+      const lineHeight = fontSize * 1.5;
+      const maxW = Math.min(width * 0.88, 900);
       ctx.font = `bold ${fontSize}px Arial, sans-serif`;
-      const words = quote.split(" ");
-      const lines: string[] = [];
-      let cur = "";
-      for (const w of words) {
-        const test = cur ? `${cur} ${w}` : w;
-        if (ctx.measureText(test).width > maxW && cur) {
-          lines.push(cur);
-          cur = w;
-        } else {
-          cur = test;
+
+      const wrap = (text: string): string[] => {
+        const words = text.split(" ");
+        const lines: string[] = [];
+        let cur = "";
+        for (const w of words) {
+          const test = cur ? `${cur} ${w}` : w;
+          if (ctx.measureText(test).width > maxW && cur) {
+            lines.push(cur);
+            cur = w;
+          } else {
+            cur = test;
+          }
         }
-      }
-      if (cur) lines.push(cur);
-      const bottomMargin = Math.max(70, height * 0.12);
+        if (cur) lines.push(cur);
+        return lines;
+      };
+
+      const quoteLines = wrap(quote);
+      const authorLine = author ? `— ${author}` : "";
+      const totalLines = quoteLines.length + (authorLine ? 2 : 0); // +1 spacer
+      const bottomMargin = Math.max(60, height * 0.1);
       const startY =
-        height - bottomMargin - lines.length * lineHeight + lineHeight / 2;
+        height - bottomMargin - totalLines * lineHeight + lineHeight / 2;
       const out: Slot[] = [];
-      for (let li = 0; li < lines.length; li++) {
-        const line = lines[li];
+
+      const layoutLine = (line: string, y: number) => {
         const lineW = ctx.measureText(line).width;
         let x = (width - lineW) / 2;
-        const y = startY + li * lineHeight;
         for (const ch of line) {
           const chW = ctx.measureText(ch).width;
-          if (ch !== " ") {
-            out.push({ x: x + chW / 2, y, char: ch });
-          }
+          if (ch !== " ") out.push({ x: x + chW / 2, y, char: ch, claimed: false });
           x += chW;
         }
+      };
+
+      for (let li = 0; li < quoteLines.length; li++) {
+        layoutLine(quoteLines[li], startY + li * lineHeight);
+      }
+      if (authorLine) {
+        // Blank spacer line, then author on its own line.
+        const ay = startY + (quoteLines.length + 1) * lineHeight;
+        layoutLine(authorLine, ay);
       }
       return out;
     };
 
     const ensureSlots = () => {
-      const sig = `${quoteRef.current}|${width}|${height}`;
+      const sig = `${quoteRef.current}|${quoteAuthorRef.current}|${width}|${height}`;
       if (sig === slotsSig && slots.length) return;
       slotsSig = sig;
       slots = layoutQuote();
-      nextSlot = 0;
       // Drop any in-flight (unsettled) rain so we don't double-fill slots.
       for (let i = droplets.length - 1; i >= 0; i--) {
         if (droplets[i].falling && !droplets[i].settled) {
@@ -309,6 +327,7 @@ function ExperimentsPage() {
         }
       }
     };
+
 
 
 
