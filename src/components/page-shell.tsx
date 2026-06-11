@@ -8,7 +8,7 @@ export function PageShell({ children }: { children: ReactNode }) {
     <div className="relative min-h-screen bg-background text-foreground">
       <SiteLogo variant="dark" />
       <SiteNav variant="dark" />
-      <main className="mx-auto max-w-3xl px-6 pt-[260px] md:pt-[220px] pb-20">
+      <main className="mx-auto max-w-3xl px-6 pt-[320px] md:pt-[280px] pb-20">
         {children}
       </main>
       <CookieBanner />
