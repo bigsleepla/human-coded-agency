@@ -80,7 +80,7 @@ function seedCloud(
   for (let i = 0; i < blobCount; i++) {
     blobs.push({
       x: (Math.random() - 0.5) * 280 * scale,
-      y: (Math.random() - 0.5) * 70 * scale,
+      y: (Math.random() - 0.5) * 45 * scale,
       r: (80 + Math.random() * 90) * scale,
       w: 0.5 + Math.random() * 0.6,
     });
@@ -349,7 +349,7 @@ function ExperimentsPage() {
       const scale = 0.8 + Math.random() * 0.55;
       const cloud: Cloud = {
         ax: width + 200 + i * (320 + Math.random() * 260),
-        ay: 35 + Math.random() * 35,
+        ay: 15 + Math.random() * 15,
         // Wider speed spread so faster clouds overtake slower ones and collide.
         vx: -(6 + Math.random() * 28),
         vy: (Math.random() - 0.5) * 4,
@@ -471,7 +471,7 @@ function ExperimentsPage() {
         c.ay += c.vy * dt;
         if (c.ax + c.radius < -50) {
           c.ax = width + 200 + Math.random() * 400;
-          c.ay = 35 + Math.random() * 35;
+          c.ay = 15 + Math.random() * 15;
           c.vx = -(6 + Math.random() * 28);
           c.vy = (Math.random() - 0.5) * 4;
           c.slowed = false;
@@ -530,15 +530,15 @@ function ExperimentsPage() {
         const c = clouds[i];
         const targetVx = c.slowed ? -1.5 : -14;
         c.vx += (targetVx - c.vx) * 0.02 * dt * 5;
-        const targetY = 40 + (i % 2) * 20;
+        const targetY = 18 + (i % 2) * 12;
         c.vy += (targetY - c.ay) * 0.05;
         c.vy *= Math.exp(-3.2 * dt);
-        if (c.ay < 25) {
-          c.ay = 25;
+        if (c.ay < 10) {
+          c.ay = 10;
           if (c.vy < 0) c.vy = 0;
         }
-        if (c.ay > 80) {
-          c.ay = 80;
+        if (c.ay > 40) {
+          c.ay = 40;
           if (c.vy > 0) c.vy = 0;
         }
 
