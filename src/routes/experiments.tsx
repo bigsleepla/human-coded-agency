@@ -23,6 +23,7 @@ type Droplet = {
   alpha: number;
   rot: number;
   rotVel: number;
+  edge: number; // 0 = core, 1 = outer fringe — loosens cohesion + fades alpha
 };
 
 type Cloud = {
@@ -66,14 +67,17 @@ function seedCloud(
         break;
       }
     }
-    const u = (Math.random() + Math.random()) / 2; // bias toward center
+    // Bias toward edge to give a fuzzier, more diffuse silhouette.
+    const u = Math.sqrt(Math.random());
     const radius = u * chosen.r;
     const angle = Math.random() * Math.PI * 2;
     const hx = chosen.x + Math.cos(angle) * radius;
     const hy = chosen.y + Math.sin(angle) * radius * 0.65;
 
-    const distFromBlob = radius / chosen.r;
-    const alpha = (1 - distFromBlob * 0.6) * (0.35 + chosen.w * 0.55);
+    const distFromBlob = radius / chosen.r; // 0 center .. 1 edge
+    const edge = Math.min(1, distFromBlob);
+    // Sharper falloff at the perimeter so edges feel like vapor.
+    const alpha = Math.pow(1 - edge, 1.6) * (0.4 + chosen.w * 0.55) + 0.05;
 
     const rabs = Math.hypot(hx, hy);
     if (rabs > maxR) maxR = rabs;
@@ -87,10 +91,11 @@ function seedCloud(
       hy,
       cloud: cloudIndex,
       char: CHARS[Math.floor(Math.random() * CHARS.length)],
-      size: (22 + Math.random() * 26) * scale,
-      alpha: Math.min(0.95, Math.max(0.1, alpha)),
+      size: (20 + Math.random() * 26) * scale,
+      alpha: Math.min(0.9, Math.max(0.06, alpha)),
       rot: (Math.random() - 0.5) * Math.PI,
       rotVel: (Math.random() - 0.5) * 0.4,
+      edge,
     });
   }
   cloud.radius = maxR + 60 * scale;
@@ -126,10 +131,11 @@ function ExperimentsPage() {
     for (let i = 0; i < cloudCount; i++) {
       const scale = 0.8 + Math.random() * 0.55;
       const cloud: Cloud = {
-        ax: width + 200 + i * (380 + Math.random() * 220),
+        ax: width + 200 + i * (320 + Math.random() * 260),
         ay: 90 + Math.random() * Math.max(60, height * 0.18),
-        vx: -(10 + Math.random() * 12),
-        vy: 0,
+        // Wider speed spread so faster clouds overtake slower ones and collide.
+        vx: -(6 + Math.random() * 28),
+        vy: (Math.random() - 0.5) * 4,
         radius: 0,
       };
       seedCloud(i, cloud, droplets, scale);
@@ -167,7 +173,8 @@ function ExperimentsPage() {
         if (c.ax + c.radius < -50) {
           c.ax = width + 200 + Math.random() * 400;
           c.ay = 90 + Math.random() * Math.max(60, height * 0.18);
-          c.vx = -(10 + Math.random() * 12);
+          c.vx = -(6 + Math.random() * 28);
+          c.vy = (Math.random() - 0.5) * 4;
           // teleport droplets so they don't streak across the screen
           for (const d of droplets) {
             if (d.cloud === clouds.indexOf(c)) {
@@ -178,6 +185,46 @@ function ExperimentsPage() {
             }
           }
         }
+      }
+
+      // Cloud-cloud anchor physics: soft elastic collisions so cloud bodies
+      // bounce / glance off each other while their droplets intermingle and
+      // appear to merge. Anchors carry "momentum" via vx/vy.
+      for (let i = 0; i < clouds.length; i++) {
+        for (let j = i + 1; j < clouds.length; j++) {
+          const a = clouds[i];
+          const b = clouds[j];
+          const dx = b.ax - a.ax;
+          const dy = b.ay - a.ay;
+          const dist = Math.hypot(dx, dy) || 0.0001;
+          const minDist = (a.radius + b.radius) * 0.7;
+          if (dist < minDist) {
+            const overlap = (minDist - dist) / minDist; // 0..1
+            const nx = dx / dist;
+            const ny = dy / dist;
+            // Soft repulsion proportional to overlap (bounce).
+            const push = overlap * 60;
+            a.vx -= nx * push * dt;
+            a.vy -= ny * push * dt;
+            b.vx += nx * push * dt;
+            b.vy += ny * push * dt;
+            // Mild damping on the collision normal so they don't oscillate.
+            const relV = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+            if (relV < 0) {
+              const j2 = -relV * 0.25;
+              a.vx -= nx * j2;
+              a.vy -= ny * j2;
+              b.vx += nx * j2;
+              b.vy += ny * j2;
+            }
+          }
+        }
+        // Keep clouds drifting leftward overall and stay near the top band.
+        const c = clouds[i];
+        c.vx += (-14 - c.vx) * 0.02 * dt * 5;
+        const targetY = 110 + (i % 2) * 40;
+        c.vy += (targetY - c.ay) * 0.002;
+        c.vy *= Math.exp(-0.6 * dt);
       }
 
       // Build spatial hash
@@ -245,25 +292,28 @@ function ExperimentsPage() {
         const d = droplets[i];
         const c = clouds[d.cloud];
 
-        // Cohesion: spring back toward home offset within the cloud, so
-        // the cloud retains its silhouette while drifting.
+        // Cohesion: spring back toward home offset. Edge droplets are
+        // bound far more loosely — they trail off as vapor, get caught up
+        // by other passing clouds, and let bodies appear to merge.
+        const cohesionScale = COHESION * (1 - 0.85 * d.edge);
         const tx = c.ax + d.hx;
         const ty = c.ay + d.hy;
-        const sx = (tx - d.x) * COHESION;
-        const sy = (ty - d.y) * COHESION;
+        const sx = (tx - d.x) * cohesionScale;
+        const sy = (ty - d.y) * cohesionScale;
 
         let axi = ax[i] + sx;
         let ayi = ay[i] + sy;
 
-        // Subtle turbulence (curl-noise-ish) so neighbours swirl gently.
+        // Turbulence — stronger for outer/vapor droplets.
+        const turb = 12 + d.edge * 28;
         const tNoiseX =
           Math.sin(d.x * 0.012 + t * 0.7 + d.cloud) +
           Math.cos(d.y * 0.013 - t * 0.5);
         const tNoiseY =
           Math.cos(d.x * 0.011 - t * 0.6 + d.cloud * 1.3) +
           Math.sin(d.y * 0.014 + t * 0.8);
-        axi += tNoiseX * 14;
-        ayi += tNoiseY * 10;
+        axi += tNoiseX * turb;
+        ayi += tNoiseY * turb * 0.75;
 
         d.vx += axi * dt;
         d.vy += ayi * dt;
