@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as PlaygroundRouteImport } from './routes/playground'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as ExperimentsRouteImport } from './routes/experiments'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -23,11 +22,6 @@ import { Route as AppSubmissionsIndexRouteImport } from './routes/_app.submissio
 import { Route as AppSubmissionsNewRouteImport } from './routes/_app.submissions.new'
 import { Route as AppSubmissionsIdRouteImport } from './routes/_app.submissions.$id'
 
-const PlaygroundRoute = PlaygroundRouteImport.update({
-  id: '/playground',
-  path: '/playground',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -93,7 +87,6 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/experiments': typeof ExperimentsRoute
   '/onboarding': typeof OnboardingRoute
-  '/playground': typeof PlaygroundRoute
   '/board': typeof AppBoardRoute
   '/browse': typeof AppBrowseRoute
   '/team': typeof AppTeamRoute
@@ -107,7 +100,6 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/experiments': typeof ExperimentsRoute
   '/onboarding': typeof OnboardingRoute
-  '/playground': typeof PlaygroundRoute
   '/board': typeof AppBoardRoute
   '/browse': typeof AppBrowseRoute
   '/team': typeof AppTeamRoute
@@ -123,7 +115,6 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/experiments': typeof ExperimentsRoute
   '/onboarding': typeof OnboardingRoute
-  '/playground': typeof PlaygroundRoute
   '/_app/board': typeof AppBoardRoute
   '/_app/browse': typeof AppBrowseRoute
   '/_app/team': typeof AppTeamRoute
@@ -139,7 +130,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/experiments'
     | '/onboarding'
-    | '/playground'
     | '/board'
     | '/browse'
     | '/team'
@@ -153,7 +143,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/experiments'
     | '/onboarding'
-    | '/playground'
     | '/board'
     | '/browse'
     | '/team'
@@ -168,7 +157,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/experiments'
     | '/onboarding'
-    | '/playground'
     | '/_app/board'
     | '/_app/browse'
     | '/_app/team'
@@ -184,19 +172,11 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ExperimentsRoute: typeof ExperimentsRoute
   OnboardingRoute: typeof OnboardingRoute
-  PlaygroundRoute: typeof PlaygroundRoute
   STokenRoute: typeof STokenRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/playground': {
-      id: '/playground'
-      path: '/playground'
-      fullPath: '/playground'
-      preLoaderRoute: typeof PlaygroundRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/onboarding': {
       id: '/onboarding'
       path: '/onboarding'
@@ -310,7 +290,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ExperimentsRoute: ExperimentsRoute,
   OnboardingRoute: OnboardingRoute,
-  PlaygroundRoute: PlaygroundRoute,
   STokenRoute: STokenRoute,
 }
 export const routeTree = rootRouteImport
