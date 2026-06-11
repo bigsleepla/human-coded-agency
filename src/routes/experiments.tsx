@@ -116,6 +116,60 @@ function seedCloud(
     });
   }
   cloud.radius = maxR + 60 * scale;
+
+  // Seed 2-4 long tendrils per cloud. Each is a chain of droplets that
+  // anchor at a point on the cloud body and trail behind the cloud (the
+  // strand direction is computed at runtime from the cloud's velocity).
+  const strandCount = 2 + Math.floor(Math.random() * 3);
+  for (let s = 0; s < strandCount; s++) {
+    // Root somewhere on the silhouette — sample one of the blobs and pick
+    // a point near its rim so the tendril emerges from a visible lobe.
+    const blob = blobs[Math.floor(Math.random() * blobs.length)];
+    const rootAngle = Math.random() * Math.PI * 2;
+    const rootRadius = blob.r * (0.65 + Math.random() * 0.3);
+    const rootX = blob.x + Math.cos(rootAngle) * rootRadius;
+    const rootY = blob.y + Math.sin(rootAngle) * rootRadius * 0.65;
+
+    const length = (180 + Math.random() * 260) * scale;
+    const beadCount = 14 + Math.floor(Math.random() * 14);
+    const waveFreq = 1.2 + Math.random() * 2.2;
+    const wavePhase = Math.random() * Math.PI * 2;
+    const waveAmp = (10 + Math.random() * 26) * scale;
+
+    for (let i = 0; i < beadCount; i++) {
+      // Slight clustering toward the root so the strand thins to a wisp.
+      const tt = Math.pow((i + 0.5) / beadCount, 0.9);
+      const jitterX = (Math.random() - 0.5) * 6 * scale;
+      const jitterY = (Math.random() - 0.5) * 6 * scale;
+      const edge = 0.6 + 0.4 * tt; // very loose; pure vapor at the tip
+      const alpha = (1 - tt * 0.85) * (0.35 + Math.random() * 0.25) + 0.04;
+      droplets.push({
+        x: cloud.ax + rootX,
+        y: cloud.ay + rootY,
+        vx: 0,
+        vy: 0,
+        hx: rootX + jitterX,
+        hy: rootY + jitterY,
+        cloud: cloudIndex,
+        char: CHARS[Math.floor(Math.random() * CHARS.length)],
+        size: (18 + Math.random() * 18) * scale * (1 - tt * 0.45),
+        alpha: Math.min(0.85, Math.max(0.04, alpha)),
+        rot: (Math.random() - 0.5) * Math.PI,
+        rotVel: (Math.random() - 0.5) * 0.4,
+        edge,
+        tendril: {
+          rootX: rootX + jitterX,
+          rootY: rootY + jitterY,
+          t: tt,
+          strand: s,
+          length,
+          waveFreq,
+          wavePhase,
+          waveAmp,
+        },
+      });
+    }
+  }
 }
 
 function ExperimentsPage() {
