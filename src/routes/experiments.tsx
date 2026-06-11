@@ -214,14 +214,17 @@ function ExperimentsPage() {
         const author = q.author.toUpperCase().replace(/\s+/g, " ").trim();
         quoteRef.current = body;
         quoteAuthorRef.current = author;
+        // Include the em-dash that prefixes the author line so a cloud
+        // droplet can carry it; otherwise that slot can never be filled.
+        const fullText = body + " — " + author;
         const pool: string[] = [];
-        for (const ch of body + " " + author) {
+        for (const ch of fullText) {
           if (ch !== " ") pool.push(ch);
         }
         for (const ch of CHARS) pool.push(ch);
         charPoolRef.current = pool;
         const cs = new Set<string>();
-        for (const ch of body + author) if (ch !== " ") cs.add(ch);
+        for (const ch of fullText) if (ch !== " ") cs.add(ch);
         quoteCharSetRef.current = cs;
         quoteReadyRef.current = true;
         quoteSeedTickRef.current += 1;
@@ -489,9 +492,19 @@ function ExperimentsPage() {
         const c = clouds[i];
         const targetVx = c.slowed ? -1.5 : -14;
         c.vx += (targetVx - c.vx) * 0.02 * dt * 5;
-        const targetY = 110 + (i % 2) * 40;
-        c.vy += (targetY - c.ay) * 0.002;
-        c.vy *= Math.exp(-0.6 * dt);
+        const targetY = 90 + (i % 2) * 30;
+        c.vy += (targetY - c.ay) * 0.01;
+        c.vy *= Math.exp(-1.6 * dt);
+        // Hard ceiling/floor — the cloud bodies stay anchored near the
+        // top of the canvas regardless of how their droplets churn.
+        if (c.ay < 70) {
+          c.ay = 70;
+          if (c.vy < 0) c.vy = 0;
+        }
+        if (c.ay > 180) {
+          c.ay = 180;
+          if (c.vy > 0) c.vy = 0;
+        }
 
         // Rain spawning: non-linear. Each cloud scans its own underside
         // for any droplet whose char matches ANY unclaimed slot. When it
