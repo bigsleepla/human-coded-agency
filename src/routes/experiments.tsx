@@ -235,7 +235,7 @@ function ExperimentsPage() {
         className="absolute top-4 left-4 z-10 select-none pointer-events-none font-black leading-[0.95] tracking-tight text-foreground"
         style={{
           fontFamily:
-            '"Helvetica Neue", Helvetica, Arial, system-ui, sans-serif',
+            'Manrope, "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif',
           fontStretch: "condensed",
         }}
       >
