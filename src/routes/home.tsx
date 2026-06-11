@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef } from "react";
 import { getQuoteOfTheDay } from "@/lib/quotes.functions";
 
-export const Route = createFileRoute("/experiments")({
+export const Route = createFileRoute("/home")({
   component: ExperimentsPage,
 });
 

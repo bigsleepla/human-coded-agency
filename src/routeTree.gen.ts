@@ -10,7 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
-import { Route as ExperimentsRouteImport } from './routes/experiments'
+import { Route as HomeRouteImport } from './routes/home'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
@@ -27,9 +27,9 @@ const OnboardingRoute = OnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ExperimentsRoute = ExperimentsRouteImport.update({
-  id: '/experiments',
-  path: '/experiments',
+const HomeRoute = HomeRouteImport.update({
+  id: '/home',
+  path: '/home',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -85,7 +85,7 @@ const AppSubmissionsIdRoute = AppSubmissionsIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/experiments': typeof ExperimentsRoute
+  '/home': typeof HomeRoute
   '/onboarding': typeof OnboardingRoute
   '/board': typeof AppBoardRoute
   '/browse': typeof AppBrowseRoute
@@ -98,7 +98,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/experiments': typeof ExperimentsRoute
+  '/home': typeof HomeRoute
   '/onboarding': typeof OnboardingRoute
   '/board': typeof AppBoardRoute
   '/browse': typeof AppBrowseRoute
@@ -113,7 +113,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
-  '/experiments': typeof ExperimentsRoute
+  '/home': typeof HomeRoute
   '/onboarding': typeof OnboardingRoute
   '/_app/board': typeof AppBoardRoute
   '/_app/browse': typeof AppBrowseRoute
@@ -128,7 +128,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
-    | '/experiments'
+    | '/home'
     | '/onboarding'
     | '/board'
     | '/browse'
@@ -141,7 +141,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
-    | '/experiments'
+    | '/home'
     | '/onboarding'
     | '/board'
     | '/browse'
@@ -155,7 +155,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/auth'
-    | '/experiments'
+    | '/home'
     | '/onboarding'
     | '/_app/board'
     | '/_app/browse'
@@ -170,7 +170,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
-  ExperimentsRoute: typeof ExperimentsRoute
+  HomeRoute: typeof HomeRoute
   OnboardingRoute: typeof OnboardingRoute
   STokenRoute: typeof STokenRoute
 }
@@ -184,11 +184,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/experiments': {
-      id: '/experiments'
-      path: '/experiments'
-      fullPath: '/experiments'
-      preLoaderRoute: typeof ExperimentsRouteImport
+    '/home': {
+      id: '/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof HomeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -288,10 +288,20 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
-  ExperimentsRoute: ExperimentsRoute,
+  HomeRoute: HomeRoute,
   OnboardingRoute: OnboardingRoute,
   STokenRoute: STokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
