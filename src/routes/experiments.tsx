@@ -200,6 +200,10 @@ function ExperimentsPage() {
 
   const quoteAuthorRef = useRef<string>("");
   const quoteSeedTickRef = useRef<number>(0);
+  // Set of characters that appear in the quote — used to give cloud
+  // droplets carrying those glyphs a downward weight so they sink to
+  // the underside (where rain peels off) instead of waiting on chance.
+  const quoteCharSetRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     let cancelled = false;
@@ -216,6 +220,9 @@ function ExperimentsPage() {
         }
         for (const ch of CHARS) pool.push(ch);
         charPoolRef.current = pool;
+        const cs = new Set<string>();
+        for (const ch of body + author) if (ch !== " ") cs.add(ch);
+        quoteCharSetRef.current = cs;
         quoteReadyRef.current = true;
         quoteSeedTickRef.current += 1;
       })
@@ -650,6 +657,9 @@ function ExperimentsPage() {
           // damping so gravity dominates and drops accelerate as they fall.
           d.vx *= Math.exp(-3.5 * dt);
           d.vy *= Math.exp(-0.12 * dt);
+          // Rain never reverses — clamp upward motion so a droplet that
+          // started falling can only continue downward.
+          if (d.vy < 0) d.vy = 0;
 
           d.x += d.vx * dt;
           d.y += d.vy * dt;
@@ -719,6 +729,18 @@ function ExperimentsPage() {
 
         let axi = ax[i] + sx;
         let ayi = ay[i] + sy;
+
+        // Quote-character droplets carry "weight" — a persistent downward
+        // acceleration that pushes them toward the underside of the cloud
+        // where they can peel off as rain. Tendril/vapor droplets stay
+        // weightless so the silhouette still drifts naturally.
+        if (
+          !d.tendril &&
+          quoteCharSetRef.current.has(d.char) &&
+          quoteReadyRef.current
+        ) {
+          ayi += 260;
+        }
 
         // Turbulence — stronger for outer/vapor droplets.
         const turb = 12 + d.edge * 28;
