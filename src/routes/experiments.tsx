@@ -574,6 +574,7 @@ function ExperimentsPage() {
                 dd.cloud === cloudIdx &&
                 !dd.tendril &&
                 !dd.falling &&
+                dd.quoteGlyph &&
                 needMap.has(dd.char) &&
                 dd.y > c.ay + 10
               ) {
