@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
+import icon from "@/assets/human-coded-icon.png.asset.json";
 
 export const Route = createFileRoute("/experiments")({
   component: ExperimentsPage,
