@@ -276,15 +276,22 @@ function ExperimentsPage() {
           c.ay = 90 + Math.random() * Math.max(60, height * 0.18);
           c.vx = -(6 + Math.random() * 28);
           c.vy = (Math.random() - 0.5) * 4;
-          // teleport droplets so they don't streak across the screen
+          c.slowed = false;
+          c.rainIndex = 0;
+          c.rainTimer = 0;
+          // teleport non-falling droplets so they don't streak across the screen
           for (const d of droplets) {
-            if (d.cloud === clouds.indexOf(c)) {
+            if (d.cloud === clouds.indexOf(c) && !d.falling) {
               d.x = c.ax + d.hx;
               d.y = c.ay + d.hy;
               d.vx = 0;
               d.vy = 0;
             }
           }
+        }
+        // Cloud has blown into ~40% of the page → slow it down and start raining.
+        if (!c.slowed && c.ax < width * 0.6) {
+          c.slowed = true;
         }
       }
 
