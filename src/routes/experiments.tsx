@@ -228,6 +228,72 @@ function ExperimentsPage() {
     resize();
     window.addEventListener("resize", resize);
 
+    // Slot layout: each glyph of the quote has a fixed (x, y) "home" at the
+    // bottom of the canvas. Rain droplets are assigned slots in order and
+    // steer/land into them, assembling the quote as they fall.
+    type Slot = { x: number; y: number; char: string };
+    let slots: Slot[] = [];
+    let nextSlot = 0;
+    let slotsSig = "";
+    let slotFontSize = 24;
+
+    const layoutQuote = (): Slot[] => {
+      const quote = quoteRef.current;
+      if (!quote) return [];
+      const fontSize = Math.max(16, Math.min(30, width / 48));
+      slotFontSize = fontSize;
+      const lineHeight = fontSize * 1.45;
+      const maxW = width * 0.82;
+      ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+      const words = quote.split(" ");
+      const lines: string[] = [];
+      let cur = "";
+      for (const w of words) {
+        const test = cur ? `${cur} ${w}` : w;
+        if (ctx.measureText(test).width > maxW && cur) {
+          lines.push(cur);
+          cur = w;
+        } else {
+          cur = test;
+        }
+      }
+      if (cur) lines.push(cur);
+      const bottomMargin = Math.max(70, height * 0.12);
+      const startY =
+        height - bottomMargin - lines.length * lineHeight + lineHeight / 2;
+      const out: Slot[] = [];
+      for (let li = 0; li < lines.length; li++) {
+        const line = lines[li];
+        const lineW = ctx.measureText(line).width;
+        let x = (width - lineW) / 2;
+        const y = startY + li * lineHeight;
+        for (const ch of line) {
+          const chW = ctx.measureText(ch).width;
+          if (ch !== " ") {
+            out.push({ x: x + chW / 2, y, char: ch });
+          }
+          x += chW;
+        }
+      }
+      return out;
+    };
+
+    const ensureSlots = () => {
+      const sig = `${quoteRef.current}|${width}|${height}`;
+      if (sig === slotsSig && slots.length) return;
+      slotsSig = sig;
+      slots = layoutQuote();
+      nextSlot = 0;
+      // Drop any in-flight (unsettled) rain so we don't double-fill slots.
+      for (let i = droplets.length - 1; i >= 0; i--) {
+        if (droplets[i].falling && !droplets[i].settled) {
+          droplets.splice(i, 1);
+        }
+      }
+    };
+
+
+
     const clouds: Cloud[] = [];
     const droplets: Droplet[] = [];
     const cloudCount = 4;
