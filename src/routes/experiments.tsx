@@ -232,22 +232,20 @@ function ExperimentsPage() {
     <div className="relative min-h-[calc(100vh-3.5rem)] bg-background text-foreground">
       <div
         aria-label="Human-Coded"
-        className="absolute top-4 left-4 z-10 select-none pointer-events-none font-black leading-[0.95] tracking-tight text-foreground"
+        className="absolute top-4 left-4 z-10 select-none pointer-events-none font-bold leading-[0.95] tracking-tight text-foreground"
         style={{
           fontFamily:
             'Garet, "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif',
-          fontStretch: "condensed",
         }}
       >
         <div
           className="text-[90px]"
-          style={{ fontStyle: "italic", fontWeight: 900 }}
         >
           <span style={{ marginRight: "6px" }}>|</span>HUMAN
         </div>
         <div
           className="text-[90px]"
-          style={{ fontWeight: 900, marginLeft: "42px" }}
+          style={{ marginLeft: "42px" }}
         >
           -CODED
         </div>
