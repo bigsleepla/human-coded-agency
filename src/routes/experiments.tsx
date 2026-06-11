@@ -92,7 +92,7 @@ function ExperimentsPage() {
         rotPhase: Math.random() * Math.PI * 2,
         rotAmp: 0.1 + Math.random() * 0.35,
         char: CHARS[Math.floor(Math.random() * CHARS.length)],
-        size: 10 + Math.random() * 10,
+        size: 22 + Math.random() * 28,
         alpha: Math.min(0.95, Math.max(0.08, alpha)),
       });
     }
