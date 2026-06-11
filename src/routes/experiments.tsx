@@ -424,47 +424,49 @@ function ExperimentsPage() {
         c.vy += (targetY - c.ay) * 0.002;
         c.vy *= Math.exp(-0.6 * dt);
 
-        // Rain spawning: once slowed, drip the quote characters from this
-        // cloud, each assigned to the next empty slot in the laid-out quote.
-        if (c.slowed) {
+        // Rain spawning: once slowed, wait for one of this cloud's own
+        // droplets to happen to display the character needed by the next
+        // empty slot — then peel that droplet off the cloud and let it
+        // fall into place. Cloud droplets shimmer (re-roll their char)
+        // each frame, so the speed at which the quote forms depends on
+        // how often the cloud rolls the right glyphs.
+        if (c.slowed && quoteReadyRef.current) {
           c.rainTimer += dt;
-          const interval = 0.06; // seconds between drops per cloud
+          const interval = 0.05; // how often we *attempt* a claim
           while (c.rainTimer >= interval) {
             c.rainTimer -= interval;
             ensureSlots();
             if (nextSlot >= slots.length) break;
-            // Pick a core (non-tendril, non-falling, low-edge) droplet of
-            // this cloud as the visual source of the drop.
+            const needed = slots[nextSlot].char;
             const cloudIdx = i;
-            const candidates: number[] = [];
+            const matches: number[] = [];
             for (let di = 0; di < droplets.length; di++) {
               const dd = droplets[di];
-              if (dd.cloud === cloudIdx && !dd.tendril && !dd.falling && dd.edge < 0.6) {
-                candidates.push(di);
+              if (
+                dd.cloud === cloudIdx &&
+                !dd.tendril &&
+                !dd.falling &&
+                dd.char === needed &&
+                dd.edge < 0.75
+              ) {
+                matches.push(di);
               }
             }
-            if (!candidates.length) break;
-            const src = droplets[candidates[Math.floor(Math.random() * candidates.length)]];
+            if (!matches.length) break; // no match yet — wait for shimmer
+            const pick =
+              droplets[matches[Math.floor(Math.random() * matches.length)]];
             const slot = slots[nextSlot++];
-            droplets.push({
-              x: src.x,
-              y: src.y,
-              vx: (Math.random() - 0.5) * 20,
-              vy: 20 + Math.random() * 30,
-              hx: 0,
-              hy: 0,
-              cloud: cloudIdx,
-              char: slot.char,
-              size: slotFontSize,
-              alpha: 0.95,
-              baseAlpha: 1,
-              rot: (Math.random() - 0.5) * 0.6,
-              rotVel: (Math.random() - 0.5) * 2,
-              edge: 0,
-              falling: true,
-              targetX: slot.x,
-              targetY: slot.y,
-            });
+            pick.falling = true;
+            pick.targetX = slot.x;
+            pick.targetY = slot.y;
+            pick.size = slotFontSize;
+            pick.baseAlpha = 1;
+            pick.alpha = 1;
+            pick.edge = 0;
+            pick.vx = (Math.random() - 0.5) * 20;
+            pick.vy = 20 + Math.random() * 30;
+            pick.rot = (Math.random() - 0.5) * 0.6;
+            pick.rotVel = (Math.random() - 0.5) * 2;
           }
         }
       }
