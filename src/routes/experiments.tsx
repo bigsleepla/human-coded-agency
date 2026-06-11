@@ -492,9 +492,19 @@ function ExperimentsPage() {
         const c = clouds[i];
         const targetVx = c.slowed ? -1.5 : -14;
         c.vx += (targetVx - c.vx) * 0.02 * dt * 5;
-        const targetY = 110 + (i % 2) * 40;
-        c.vy += (targetY - c.ay) * 0.002;
-        c.vy *= Math.exp(-0.6 * dt);
+        const targetY = 90 + (i % 2) * 30;
+        c.vy += (targetY - c.ay) * 0.01;
+        c.vy *= Math.exp(-1.6 * dt);
+        // Hard ceiling/floor — the cloud bodies stay anchored near the
+        // top of the canvas regardless of how their droplets churn.
+        if (c.ay < 70) {
+          c.ay = 70;
+          if (c.vy < 0) c.vy = 0;
+        }
+        if (c.ay > 180) {
+          c.ay = 180;
+          if (c.vy > 0) c.vy = 0;
+        }
 
         // Rain spawning: non-linear. Each cloud scans its own underside
         // for any droplet whose char matches ANY unclaimed slot. When it
