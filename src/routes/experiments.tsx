@@ -785,10 +785,9 @@ function ExperimentsPage() {
         if (
           !d.tendril &&
           d.quoteGlyph &&
-          quoteReadyRef.current &&
-          d.y >= c.ay + d.hy - 8
+          quoteReadyRef.current
         ) {
-          ayi += 180;
+          ayi += 320;
         }
 
         // Turbulence — stronger for outer/vapor droplets.
