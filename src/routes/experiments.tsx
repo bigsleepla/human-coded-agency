@@ -327,12 +327,62 @@ function ExperimentsPage() {
             }
           }
         }
-        // Keep clouds drifting leftward overall and stay near the top band.
+        // Keep clouds drifting leftward; once "slowed" they nearly stall so
+        // the rain falls from a near-stationary cloud body.
         const c = clouds[i];
-        c.vx += (-14 - c.vx) * 0.02 * dt * 5;
+        const targetVx = c.slowed ? -1.5 : -14;
+        c.vx += (targetVx - c.vx) * 0.02 * dt * 5;
         const targetY = 110 + (i % 2) * 40;
         c.vy += (targetY - c.ay) * 0.002;
         c.vy *= Math.exp(-0.6 * dt);
+
+        // Rain spawning: once slowed, drip the quote characters in sequence
+        // from random core droplets of this cloud.
+        if (c.slowed) {
+          c.rainTimer += dt;
+          const interval = 0.07; // seconds between drops per cloud
+          while (c.rainTimer >= interval) {
+            c.rainTimer -= interval;
+            const quote = quoteRef.current;
+            if (!quote.length) break;
+            // Pick a core (non-tendril, non-falling, low-edge) droplet of this cloud.
+            const cloudIdx = i;
+            const candidates: number[] = [];
+            for (let di = 0; di < droplets.length; di++) {
+              const dd = droplets[di];
+              if (dd.cloud === cloudIdx && !dd.tendril && !dd.falling && dd.edge < 0.6) {
+                candidates.push(di);
+              }
+            }
+            if (!candidates.length) break;
+            const src = droplets[candidates[Math.floor(Math.random() * candidates.length)]];
+            let ch = quote[c.rainIndex % quote.length];
+            c.rainIndex++;
+            // Skip spaces so we don't drop invisible characters.
+            let guard = 0;
+            while (ch === " " && guard++ < 8) {
+              ch = quote[c.rainIndex % quote.length];
+              c.rainIndex++;
+            }
+            droplets.push({
+              x: src.x,
+              y: src.y,
+              vx: (Math.random() - 0.5) * 20,
+              vy: 20 + Math.random() * 30,
+              hx: 0,
+              hy: 0,
+              cloud: cloudIdx,
+              char: ch,
+              size: 18 + Math.random() * 10,
+              alpha: 0.95,
+              baseAlpha: 0.95,
+              rot: 0,
+              rotVel: 0,
+              edge: 0,
+              falling: true,
+            });
+          }
+        }
       }
 
       // Build spatial hash
