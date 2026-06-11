@@ -43,9 +43,14 @@ type Droplet = {
   rotVel: number;
   edge: number; // 0 = core, 1 = outer fringe — loosens cohesion + fades alpha
   tendril?: Tendril;
-  // Rain droplets break away from the cloud and free-fall with gravity.
+  // Rain droplets break away from the cloud and free-fall with gravity,
+  // steering toward a target slot in the laid-out quote at the bottom of
+  // the page. Once they reach the slot they settle in place.
   falling?: boolean;
   baseAlpha?: number;
+  targetX?: number;
+  targetY?: number;
+  settled?: boolean;
 };
 
 type Cloud = {
@@ -223,6 +228,72 @@ function ExperimentsPage() {
     resize();
     window.addEventListener("resize", resize);
 
+    // Slot layout: each glyph of the quote has a fixed (x, y) "home" at the
+    // bottom of the canvas. Rain droplets are assigned slots in order and
+    // steer/land into them, assembling the quote as they fall.
+    type Slot = { x: number; y: number; char: string };
+    let slots: Slot[] = [];
+    let nextSlot = 0;
+    let slotsSig = "";
+    let slotFontSize = 24;
+
+    const layoutQuote = (): Slot[] => {
+      const quote = quoteRef.current;
+      if (!quote) return [];
+      const fontSize = Math.max(16, Math.min(30, width / 48));
+      slotFontSize = fontSize;
+      const lineHeight = fontSize * 1.45;
+      const maxW = width * 0.82;
+      ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+      const words = quote.split(" ");
+      const lines: string[] = [];
+      let cur = "";
+      for (const w of words) {
+        const test = cur ? `${cur} ${w}` : w;
+        if (ctx.measureText(test).width > maxW && cur) {
+          lines.push(cur);
+          cur = w;
+        } else {
+          cur = test;
+        }
+      }
+      if (cur) lines.push(cur);
+      const bottomMargin = Math.max(70, height * 0.12);
+      const startY =
+        height - bottomMargin - lines.length * lineHeight + lineHeight / 2;
+      const out: Slot[] = [];
+      for (let li = 0; li < lines.length; li++) {
+        const line = lines[li];
+        const lineW = ctx.measureText(line).width;
+        let x = (width - lineW) / 2;
+        const y = startY + li * lineHeight;
+        for (const ch of line) {
+          const chW = ctx.measureText(ch).width;
+          if (ch !== " ") {
+            out.push({ x: x + chW / 2, y, char: ch });
+          }
+          x += chW;
+        }
+      }
+      return out;
+    };
+
+    const ensureSlots = () => {
+      const sig = `${quoteRef.current}|${width}|${height}`;
+      if (sig === slotsSig && slots.length) return;
+      slotsSig = sig;
+      slots = layoutQuote();
+      nextSlot = 0;
+      // Drop any in-flight (unsettled) rain so we don't double-fill slots.
+      for (let i = droplets.length - 1; i >= 0; i--) {
+        if (droplets[i].falling && !droplets[i].settled) {
+          droplets.splice(i, 1);
+        }
+      }
+    };
+
+
+
     const clouds: Cloud[] = [];
     const droplets: Droplet[] = [];
     const cloudCount = 4;
@@ -336,16 +407,17 @@ function ExperimentsPage() {
         c.vy += (targetY - c.ay) * 0.002;
         c.vy *= Math.exp(-0.6 * dt);
 
-        // Rain spawning: once slowed, drip the quote characters in sequence
-        // from random core droplets of this cloud.
+        // Rain spawning: once slowed, drip the quote characters from this
+        // cloud, each assigned to the next empty slot in the laid-out quote.
         if (c.slowed) {
           c.rainTimer += dt;
-          const interval = 0.07; // seconds between drops per cloud
+          const interval = 0.06; // seconds between drops per cloud
           while (c.rainTimer >= interval) {
             c.rainTimer -= interval;
-            const quote = quoteRef.current;
-            if (!quote.length) break;
-            // Pick a core (non-tendril, non-falling, low-edge) droplet of this cloud.
+            ensureSlots();
+            if (nextSlot >= slots.length) break;
+            // Pick a core (non-tendril, non-falling, low-edge) droplet of
+            // this cloud as the visual source of the drop.
             const cloudIdx = i;
             const candidates: number[] = [];
             for (let di = 0; di < droplets.length; di++) {
@@ -356,14 +428,7 @@ function ExperimentsPage() {
             }
             if (!candidates.length) break;
             const src = droplets[candidates[Math.floor(Math.random() * candidates.length)]];
-            let ch = quote[c.rainIndex % quote.length];
-            c.rainIndex++;
-            // Skip spaces so we don't drop invisible characters.
-            let guard = 0;
-            while (ch === " " && guard++ < 8) {
-              ch = quote[c.rainIndex % quote.length];
-              c.rainIndex++;
-            }
+            const slot = slots[nextSlot++];
             droplets.push({
               x: src.x,
               y: src.y,
@@ -372,18 +437,21 @@ function ExperimentsPage() {
               hx: 0,
               hy: 0,
               cloud: cloudIdx,
-              char: ch,
-              size: 18 + Math.random() * 10,
+              char: slot.char,
+              size: slotFontSize,
               alpha: 0.95,
-              baseAlpha: 0.95,
-              rot: 0,
-              rotVel: 0,
+              baseAlpha: 1,
+              rot: (Math.random() - 0.5) * 0.6,
+              rotVel: (Math.random() - 0.5) * 2,
               edge: 0,
               falling: true,
+              targetX: slot.x,
+              targetY: slot.y,
             });
           }
         }
       }
+
 
       // Build spatial hash
       grid.clear();
@@ -452,12 +520,23 @@ function ExperimentsPage() {
         const c = clouds[d.cloud];
 
         if (d.falling) {
-          // Free-falling rain: no cohesion, no cloud wind, gravity-driven,
-          // but still participates in fluid repulsion/viscosity via ax/ay.
+          if (d.settled) continue; // locked into its slot — render only.
+
+          const tx = d.targetX ?? d.x;
+          const ty = d.targetY ?? height;
+
+          // Free-falling rain: gravity-driven, still participates in fluid
+          // repulsion/viscosity via ax/ay, with a lateral spring steering
+          // toward the assigned slot's x so it lands on target.
           let axi = ax[i];
           let ayi = ay[i] + GRAVITY;
-          // Mild lateral turbulence for organic streaks.
-          axi += Math.sin(d.y * 0.02 + t * 1.3 + d.cloud) * 20;
+          // Lateral spring toward target x — gentle high up, firmer as it
+          // descends so it locks onto its column near landing.
+          const verticalProgress = Math.min(1, Math.max(0, (d.y - 100) / Math.max(1, ty - 100)));
+          const lateralK = 3 + verticalProgress * 14;
+          axi += (tx - d.x) * lateralK;
+          // A touch of organic wobble while still high.
+          axi += Math.sin(d.y * 0.02 + t * 1.3 + d.cloud) * (1 - verticalProgress) * 18;
 
           d.vx += axi * dt;
           d.vy += ayi * dt;
@@ -465,15 +544,15 @@ function ExperimentsPage() {
           if (wSum[i] > 0) {
             const avgVx = vxAvg[i] / wSum[i];
             const avgVy = vyAvg[i] / wSum[i];
-            // Weaker viscosity blend so drops keep their momentum.
+            // Weaker viscosity blend so drops keep their downward momentum.
             d.vx += (avgVx - d.vx) * 0.06;
             d.vy += (avgVy - d.vy) * 0.06;
           }
 
-          // Very light damping — air resistance, but momentum dominates.
-          const damp = Math.exp(-0.15 * dt);
-          d.vx *= damp;
-          d.vy *= damp;
+          // Lateral damping (so the spring settles); very light vertical
+          // damping so gravity dominates and drops accelerate as they fall.
+          d.vx *= Math.exp(-3.5 * dt);
+          d.vy *= Math.exp(-0.12 * dt);
 
           d.x += d.vx * dt;
           d.y += d.vy * dt;
@@ -487,14 +566,22 @@ function ExperimentsPage() {
           d.rotVel *= Math.exp(-ROT_DAMP * dt);
           d.rot += d.rotVel * dt;
 
-          // Fade near the bottom so removal isn't abrupt.
-          const base = d.baseAlpha ?? 0.95;
-          const fadeStart = height - 120;
-          d.alpha = d.y > fadeStart
-            ? base * Math.max(0, 1 - (d.y - fadeStart) / 120)
-            : base;
+          d.alpha = d.baseAlpha ?? 1;
+
+          // Land: when the drop reaches its slot row, snap into place.
+          if (d.y >= ty) {
+            d.x = tx;
+            d.y = ty;
+            d.vx = 0;
+            d.vy = 0;
+            d.rot = 0;
+            d.rotVel = 0;
+            d.settled = true;
+            d.alpha = 1;
+          }
           continue;
         }
+
 
         // Cohesion: spring back toward home offset. Edge droplets are
         // bound far more loosely — they trail off as vapor, get caught up
@@ -580,13 +667,15 @@ function ExperimentsPage() {
         d.rot += d.rotVel * dt;
       }
 
-      // Cull rain that has fallen off the bottom of the screen.
+      // Safety: cull any rain that overshoots far past the bottom (shouldn't
+      // happen since drops land at their slot, but guard against drift).
       for (let i = droplets.length - 1; i >= 0; i--) {
         const d = droplets[i];
-        if (d.falling && d.y > height + 40) {
+        if (d.falling && !d.settled && d.y > height + 80) {
           droplets.splice(i, 1);
         }
       }
+
 
 
       // Render
