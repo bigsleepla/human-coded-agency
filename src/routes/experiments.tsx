@@ -220,6 +220,9 @@ function ExperimentsPage() {
         }
         for (const ch of CHARS) pool.push(ch);
         charPoolRef.current = pool;
+        const cs = new Set<string>();
+        for (const ch of body + author) if (ch !== " ") cs.add(ch);
+        quoteCharSetRef.current = cs;
         quoteReadyRef.current = true;
         quoteSeedTickRef.current += 1;
       })
