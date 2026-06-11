@@ -745,12 +745,17 @@ function ExperimentsPage() {
         // acceleration that pushes them toward the underside of the cloud
         // where they can peel off as rain. Tendril/vapor droplets stay
         // weightless so the silhouette still drifts naturally.
+        // Quote-character droplets carry a small "weight" — only applied
+        // once they're at or below their home position, so they nudge
+        // toward the underside to peel off as rain WITHOUT dragging the
+        // whole cloud body downward.
         if (
           !d.tendril &&
           quoteCharSetRef.current.has(d.char) &&
-          quoteReadyRef.current
+          quoteReadyRef.current &&
+          d.y >= c.ay + d.hy
         ) {
-          ayi += 260;
+          ayi += 70;
         }
 
         // Turbulence — stronger for outer/vapor droplets.
