@@ -43,6 +43,9 @@ type Droplet = {
   rotVel: number;
   edge: number; // 0 = core, 1 = outer fringe — loosens cohesion + fades alpha
   tendril?: Tendril;
+  // Rain droplets break away from the cloud and free-fall with gravity.
+  falling?: boolean;
+  baseAlpha?: number;
 };
 
 type Cloud = {
@@ -51,7 +54,11 @@ type Cloud = {
   vx: number; // wind velocity
   vy: number;
   radius: number; // for wrap bookkeeping
+  slowed: boolean; // true once cloud has blown into ~40% of the page
+  rainIndex: number; // next character of the quote to drop
+  rainTimer: number; // seconds accumulator for drop cadence
 };
+
 
 const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
