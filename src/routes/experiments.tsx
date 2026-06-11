@@ -124,13 +124,12 @@ function ExperimentsPage() {
       last = now;
       t += dt;
 
-      // Target: settle around middle-left, then very slowly continue drifting
-      // diagonally. Use easing toward a moving target for a fluid feel.
-      const targetX = width * 0.42 - t * 6;   // slow continued drift left
-      const targetY = height * 0.5 + Math.sin(t * 0.25) * 18;
+      // Target: settle near the top of the screen, drift slowly left
+      const targetX = width * 0.35 - t * 1.5;
+      const targetY = height * 0.22 + Math.sin(t * 0.15) * 10;
 
-      // Critically-damped-ish lerp
-      const ease = 1 - Math.exp(-dt * 0.45);
+      // Very gentle easing for a slow, heavy feel
+      const ease = 1 - Math.exp(-dt * 0.28);
       cloudX += (targetX - cloudX) * ease;
       cloudY += (targetY - cloudY) * ease;
 
