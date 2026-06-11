@@ -486,20 +486,30 @@ function ExperimentsPage() {
         c.vy += (targetY - c.ay) * 0.002;
         c.vy *= Math.exp(-0.6 * dt);
 
-        // Rain spawning: once slowed, wait for one of this cloud's own
-        // (static) droplets to be both the right glyph AND currently at
-        // the bottom of the cloud body — where rain physically drips
-        // from. As the fluid churns, matching droplets occasionally
-        // surface at the underside and fall away. Formation speed is
-        // governed by the cloud's fluid motion, not by char shuffling.
+        // Rain spawning: non-linear. Each cloud scans its own underside
+        // for any droplet whose char matches ANY unclaimed slot. When it
+        // finds one, that droplet falls into a (randomly chosen) matching
+        // slot. Slots can fill out of order so the quote materializes in
+        // a natural, scattered way.
         if (c.slowed && quoteReadyRef.current) {
           c.rainTimer += dt;
-          const interval = 0.05; // how often we *attempt* a claim
+          const interval = 0.05;
           while (c.rainTimer >= interval) {
             c.rainTimer -= interval;
             ensureSlots();
-            if (nextSlot >= slots.length) break;
-            const needed = slots[nextSlot].char;
+            if (!slots.length) break;
+            // Build a map of unclaimed slot chars → slot indices.
+            const needMap = new Map<string, number[]>();
+            let unclaimed = 0;
+            for (let si = 0; si < slots.length; si++) {
+              if (!slots[si].claimed) {
+                unclaimed++;
+                const arr = needMap.get(slots[si].char);
+                if (arr) arr.push(si);
+                else needMap.set(slots[si].char, [si]);
+              }
+            }
+            if (!unclaimed) break;
             const cloudIdx = i;
             const matches: number[] = [];
             for (let di = 0; di < droplets.length; di++) {
@@ -508,27 +518,22 @@ function ExperimentsPage() {
                 dd.cloud === cloudIdx &&
                 !dd.tendril &&
                 !dd.falling &&
-                dd.char === needed &&
-                // Must be on the underside of the cloud body (below the
-                // anchor) — that's where droplets coalesce and fall.
+                needMap.has(dd.char) &&
                 dd.y > c.ay + 10
               ) {
                 matches.push(di);
               }
             }
-            if (!matches.length) break; // wait for fluid motion to surface one
-            // Prefer the droplet currently lowest in the cloud — the one
-            // most ready to fall.
-            let pickIdx = matches[0];
-            let pickY = droplets[pickIdx].y;
-            for (const mi of matches) {
-              if (droplets[mi].y > pickY) {
-                pickY = droplets[mi].y;
-                pickIdx = mi;
-              }
-            }
+            if (!matches.length) break;
+            // Pick a random matching droplet so different letters of the
+            // quote fall first on different attempts — not always the lowest.
+            const pickIdx = matches[Math.floor(Math.random() * matches.length)];
             const pick = droplets[pickIdx];
-            const slot = slots[nextSlot++];
+            const slotChoices = needMap.get(pick.char)!;
+            const slotIdx =
+              slotChoices[Math.floor(Math.random() * slotChoices.length)];
+            const slot = slots[slotIdx];
+            slot.claimed = true;
             pick.falling = true;
             pick.targetX = slot.x;
             pick.targetY = slot.y;
