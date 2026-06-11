@@ -376,17 +376,39 @@ function ExperimentsPage() {
       if (dt > 0.05) dt = 0.05;
       t += dt;
 
-      // When the quote arrives (or changes), re-roll every cloud droplet's
-      // char from the quote-weighted pool so matches become possible.
-      const poolSig = `${charPoolRef.current.length}|${quoteRef.current}`;
-      if (poolSig !== lastPoolSig) {
-        lastPoolSig = poolSig;
+      // When the quote arrives, SEED clouds with the actual quote
+      // characters so every glyph the quote needs is guaranteed to exist
+      // somewhere in the clouds. We also sprinkle in the weighted pool
+      // for visual variety. This is the "cheat" that lets the cloud
+      // motion feel natural while still being able to finish the quote.
+      if (quoteSeedTickRef.current !== lastSeedTick && quoteReadyRef.current) {
+        lastSeedTick = quoteSeedTickRef.current;
         const pool = charPoolRef.current;
-        if (pool.length) {
-          for (const d of droplets) {
-            if (!d.falling) {
-              d.char = pool[Math.floor(Math.random() * pool.length)];
-            }
+        const needed: string[] = [];
+        for (const ch of quoteRef.current + quoteAuthorRef.current) {
+          if (ch !== " ") needed.push(ch);
+        }
+        // Eligible droplets: non-falling, non-tendril (so the cloud body
+        // visibly contains the quote chars).
+        const eligible: number[] = [];
+        for (let di = 0; di < droplets.length; di++) {
+          const d = droplets[di];
+          if (!d.falling && !d.tendril) eligible.push(di);
+        }
+        // Shuffle eligible indices.
+        for (let i = eligible.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [eligible[i], eligible[j]] = [eligible[j], eligible[i]];
+        }
+        // First, plant every needed char into a unique droplet (cycling
+        // if there are fewer eligible droplets than chars).
+        for (let i = 0; i < eligible.length; i++) {
+          if (i < needed.length) {
+            droplets[eligible[i]].char = needed[i];
+          } else if (pool.length) {
+            // Remaining droplets get random pool chars.
+            droplets[eligible[i]].char =
+              pool[Math.floor(Math.random() * pool.length)];
           }
         }
       }
