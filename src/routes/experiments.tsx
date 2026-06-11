@@ -79,18 +79,18 @@ function ExperimentsPage() {
         ox,
         oy,
         phase: Math.random() * Math.PI * 2,
-        freq: 0.25 + Math.random() * 0.45,
-        amp: 2 + Math.random() * 5,
+        freq: 0.2 + Math.random() * 0.3,
+        amp: 1.5 + Math.random() * 3.5,
         driftPhaseX: Math.random() * Math.PI * 2,
         driftPhaseY: Math.random() * Math.PI * 2,
-        driftFreqX: 0.15 + Math.random() * 0.35,
-        driftFreqY: 0.12 + Math.random() * 0.3,
-        driftAmpX: 6 + Math.random() * 14,
-        driftAmpY: 4 + Math.random() * 10,
+        driftFreqX: 0.08 + Math.random() * 0.2,
+        driftFreqY: 0.06 + Math.random() * 0.18,
+        driftAmpX: 4 + Math.random() * 10,
+        driftAmpY: 3 + Math.random() * 7,
         rot: (Math.random() - 0.5) * Math.PI,
-        rotSpeed: (Math.random() - 0.5) * 0.25, // slow constant tumble
+        rotSpeed: (Math.random() - 0.5) * 0.08,
         rotPhase: Math.random() * Math.PI * 2,
-        rotAmp: 0.15 + Math.random() * 0.5,    // oscillation amplitude (radians)
+        rotAmp: 0.1 + Math.random() * 0.35,
         char: CHARS[Math.floor(Math.random() * CHARS.length)],
         size: 10 + Math.random() * 10,
         alpha: Math.min(0.95, Math.max(0.08, alpha)),
@@ -124,13 +124,12 @@ function ExperimentsPage() {
       last = now;
       t += dt;
 
-      // Target: settle around middle-left, then very slowly continue drifting
-      // diagonally. Use easing toward a moving target for a fluid feel.
-      const targetX = width * 0.42 - t * 6;   // slow continued drift left
-      const targetY = height * 0.5 + Math.sin(t * 0.25) * 18;
+      // Target: settle near the top of the screen, drift slowly left
+      const targetX = width * 0.35 - t * 1.5;
+      const targetY = height * 0.22 + Math.sin(t * 0.15) * 10;
 
-      // Critically-damped-ish lerp
-      const ease = 1 - Math.exp(-dt * 0.45);
+      // Very gentle easing for a slow, heavy feel
+      const ease = 1 - Math.exp(-dt * 0.28);
       cloudX += (targetX - cloudX) * ease;
       cloudY += (targetY - cloudY) * ease;
 
