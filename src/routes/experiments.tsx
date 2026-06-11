@@ -190,7 +190,7 @@ function ExperimentsPage() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchQuote({ data: { category: "inspire" } })
+    fetchQuote()
       .then((q) => {
         if (cancelled) return;
         const txt = `${q.quote} — ${q.author}`.toUpperCase();
