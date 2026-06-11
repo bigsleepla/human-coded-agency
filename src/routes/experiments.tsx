@@ -134,29 +134,32 @@ function seedCloud(
   // Seed 2-4 long tendrils per cloud. Each is a chain of droplets that
   // anchor at a point on the cloud body and trail behind the cloud (the
   // strand direction is computed at runtime from the cloud's velocity).
-  const strandCount = 1 + Math.floor(Math.random() * 2);
+  const strandCount = 3 + Math.floor(Math.random() * 3);
   for (let s = 0; s < strandCount; s++) {
     // Root somewhere on the silhouette — sample one of the blobs and pick
     // a point near its rim so the tendril emerges from a visible lobe.
+    // Bias root toward the trailing (right) side of the blob so strands
+    // appear to stream behind the cloud as it drifts.
     const blob = blobs[Math.floor(Math.random() * blobs.length)];
-    const rootAngle = Math.random() * Math.PI * 2;
-    const rootRadius = blob.r * (0.65 + Math.random() * 0.3);
+    const rootAngle =
+      Math.PI * (0.7 + Math.random() * 0.6); // mostly rightward (trailing)
+    const rootRadius = blob.r * (0.7 + Math.random() * 0.3);
     const rootX = blob.x + Math.cos(rootAngle) * rootRadius;
-    const rootY = blob.y + Math.sin(rootAngle) * rootRadius * 0.65;
+    const rootY = blob.y + Math.sin(rootAngle) * rootRadius * 0.5;
 
-    const length = (70 + Math.random() * 90) * scale;
-    const beadCount = 6 + Math.floor(Math.random() * 6);
-    const waveFreq = 1.2 + Math.random() * 2.2;
+    const length = (180 + Math.random() * 220) * scale;
+    const beadCount = 14 + Math.floor(Math.random() * 12);
+    const waveFreq = 1.6 + Math.random() * 2.6;
     const wavePhase = Math.random() * Math.PI * 2;
-    const waveAmp = (6 + Math.random() * 14) * scale;
+    const waveAmp = (10 + Math.random() * 22) * scale;
 
     for (let i = 0; i < beadCount; i++) {
       // Slight clustering toward the root so the strand thins to a wisp.
-      const tt = Math.pow((i + 0.5) / beadCount, 0.9);
-      const jitterX = (Math.random() - 0.5) * 6 * scale;
-      const jitterY = (Math.random() - 0.5) * 6 * scale;
-      const edge = 0.6 + 0.4 * tt; // very loose; pure vapor at the tip
-      const alpha = (1 - tt * 0.85) * (0.35 + Math.random() * 0.25) + 0.04;
+      const tt = Math.pow((i + 0.5) / beadCount, 0.85);
+      const jitterX = (Math.random() - 0.5) * 4 * scale;
+      const jitterY = (Math.random() - 0.5) * 3 * scale;
+      const edge = 0.7 + 0.3 * tt; // very loose; pure vapor at the tip
+      const alpha = (1 - tt * 0.9) * (0.28 + Math.random() * 0.22) + 0.03;
       droplets.push({
         x: cloud.ax + rootX,
         y: cloud.ay + rootY,
