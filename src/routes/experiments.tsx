@@ -214,14 +214,17 @@ function ExperimentsPage() {
         const author = q.author.toUpperCase().replace(/\s+/g, " ").trim();
         quoteRef.current = body;
         quoteAuthorRef.current = author;
+        // Include the em-dash that prefixes the author line so a cloud
+        // droplet can carry it; otherwise that slot can never be filled.
+        const fullText = body + " — " + author;
         const pool: string[] = [];
-        for (const ch of body + " " + author) {
+        for (const ch of fullText) {
           if (ch !== " ") pool.push(ch);
         }
         for (const ch of CHARS) pool.push(ch);
         charPoolRef.current = pool;
         const cs = new Set<string>();
-        for (const ch of body + author) if (ch !== " ") cs.add(ch);
+        for (const ch of fullText) if (ch !== " ") cs.add(ch);
         quoteCharSetRef.current = cs;
         quoteReadyRef.current = true;
         quoteSeedTickRef.current += 1;
