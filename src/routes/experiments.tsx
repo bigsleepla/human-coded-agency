@@ -471,7 +471,7 @@ function ExperimentsPage() {
         c.ay += c.vy * dt;
         if (c.ax + c.radius < -50) {
           c.ax = width + 200 + Math.random() * 400;
-          c.ay = 90 + Math.random() * Math.max(60, height * 0.18);
+          c.ay = 35 + Math.random() * 35;
           c.vx = -(6 + Math.random() * 28);
           c.vy = (Math.random() - 0.5) * 4;
           c.slowed = false;
