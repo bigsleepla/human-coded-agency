@@ -537,8 +537,9 @@ function ExperimentsPage() {
         // for any droplet whose char matches ANY unclaimed slot. When it
         // finds one, that droplet falls into a (randomly chosen) matching
         // slot. Slots can fill out of order so the quote materializes in
-        // a natural, scattered way.
-        if (c.slowed && quoteReadyRef.current) {
+        // a natural, scattered way. Rain begins as soon as the cloud is
+        // visible on screen and the quote is ready.
+        if (c.ax < width + 50 && quoteReadyRef.current) {
           c.rainTimer += dt;
           const interval = 0.05;
           while (c.rainTimer >= interval) {
