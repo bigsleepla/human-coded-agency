@@ -4,6 +4,8 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { SiteNav } from "@/components/site-nav";
+import { CookieBanner } from "@/components/cookie-banner";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -55,45 +57,80 @@ function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border px-10 py-6">
-        <Link to="/home" className="text-sm uppercase tracking-wide text-muted-foreground hover:text-foreground">
-          ← Human-Coded
-        </Link>
-      </header>
-      <main className="mx-auto max-w-5xl px-6 py-20">
+    <div
+      className="relative min-h-[calc(100vh-3.5rem)] text-foreground"
+      style={{
+        background: `linear-gradient(to bottom, oklch(0.25 0.005 85), var(--background))`,
+      }}
+    >
+      <Link
+        to="/home"
+        aria-label="Human-Coded — Home"
+        className="absolute top-10 left-10 z-10 select-none font-normal leading-[0.95] tracking-tight text-white no-underline"
+        style={{
+          fontFamily:
+            'Garet, "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif',
+        }}
+      >
+        <div className="text-[40px] md:text-[60px] lg:text-[90px] italic">
+          <span style={{ marginRight: "6px" }}>|</span>HUMAN
+        </div>
+        <div className="text-[40px] md:text-[60px] lg:text-[90px] lg:ml-[42px] ml-[18px]">
+          -CODED
+        </div>
+      </Link>
+      <SiteNav />
+
+      <main className="mx-auto max-w-3xl px-6 pt-[260px] md:pt-[320px] lg:pt-[420px] pb-24">
         <h1 className="text-4xl md:text-5xl font-semibold tracking-tight">
           Contact
         </h1>
-        <div className="mt-10 grid gap-4 sm:grid-cols-3">
-          {CARDS.map((card) => (
-            <div
-              key={card.label}
-              className="rounded-xl border border-border bg-card p-6"
-            >
-              <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                {card.label}
-              </div>
-              {"href" in card && card.href ? (
-                <a
-                  href={card.href}
-                  className="mt-2 block text-lg font-medium hover:underline"
-                >
-                  {card.value}
-                </a>
-              ) : (
-                <div className="mt-2 text-lg font-medium">{card.value}</div>
-              )}
-            </div>
-          ))}
-        </div>
 
-        <section className="mt-16 max-w-md">
-          <h2 className="text-xl font-semibold">Start a conversation</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Leave your email and we'll reach out.
+        <p className="mt-8 text-2xl md:text-3xl font-medium leading-snug">
+          Start a conversation.
+        </p>
+
+        <p className="mt-6 text-lg text-muted-foreground leading-relaxed">
+          Whether you're a brand, an author, or a moderator — reach out and
+          we'll get back to you.
+        </p>
+
+        <section className="mt-16">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            Reach us
+          </h2>
+          <div className="mt-6 grid gap-4 sm:grid-cols-3">
+            {CARDS.map((card) => (
+              <div
+                key={card.label}
+                className="rounded-xl border border-border bg-card/60 backdrop-blur-sm p-6"
+              >
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                  {card.label}
+                </div>
+                {"href" in card && card.href ? (
+                  <a
+                    href={card.href}
+                    className="mt-2 block text-lg font-medium hover:underline"
+                  >
+                    {card.value}
+                  </a>
+                ) : (
+                  <div className="mt-2 text-lg font-medium">{card.value}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-16 border-t border-border pt-12">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            Leave your email
+          </h2>
+          <p className="mt-4 text-lg text-foreground font-medium">
+            We'll reach out shortly.
           </p>
-          <form onSubmit={onSubmit} className="mt-4 flex gap-2">
+          <form onSubmit={onSubmit} className="mt-6 flex gap-2 max-w-md">
             <Input
               type="email"
               required
@@ -108,6 +145,8 @@ function ContactPage() {
           </form>
         </section>
       </main>
+
+      <CookieBanner />
     </div>
   );
 }
