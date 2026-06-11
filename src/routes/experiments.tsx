@@ -198,25 +198,26 @@ function ExperimentsPage() {
   // a cloud and be claimed when its slot needs to be filled).
   const charPoolRef = useRef<string[]>(CHARS.split(""));
 
+  const quoteAuthorRef = useRef<string>("");
+  const quoteSeedTickRef = useRef<number>(0);
+
   useEffect(() => {
     let cancelled = false;
     fetchQuote()
       .then((q) => {
         if (cancelled) return;
-        const txt = `${q.quote} — ${q.author}`.toUpperCase();
-        quoteRef.current = txt.replace(/\s+/g, " ").trim();
-        // Build a char pool weighted by the quote's letter frequency so
-        // that common letters appear more often in clouds — increasing
-        // the odds of matches without making it deterministic.
+        const body = q.quote.toUpperCase().replace(/\s+/g, " ").trim();
+        const author = q.author.toUpperCase().replace(/\s+/g, " ").trim();
+        quoteRef.current = body;
+        quoteAuthorRef.current = author;
         const pool: string[] = [];
-        for (const ch of quoteRef.current) {
+        for (const ch of body + " " + author) {
           if (ch !== " ") pool.push(ch);
         }
-        // Sprinkle in a few extra alphabet chars so clouds still look
-        // varied and not just a re-shuffling of the quote.
         for (const ch of CHARS) pool.push(ch);
         charPoolRef.current = pool;
         quoteReadyRef.current = true;
+        quoteSeedTickRef.current += 1;
       })
       .catch(() => {});
     return () => {
@@ -248,59 +249,77 @@ function ExperimentsPage() {
     // Slot layout: each glyph of the quote has a fixed (x, y) "home" at the
     // bottom of the canvas. Rain droplets are assigned slots in order and
     // steer/land into them, assembling the quote as they fall.
-    type Slot = { x: number; y: number; char: string };
+    type Slot = { x: number; y: number; char: string; claimed: boolean };
     let slots: Slot[] = [];
-    let nextSlot = 0;
     let slotsSig = "";
     let slotFontSize = 24;
 
     const layoutQuote = (): Slot[] => {
       const quote = quoteRef.current;
+      const author = quoteAuthorRef.current;
       if (!quote) return [];
-      const fontSize = Math.max(16, Math.min(30, width / 48));
+      // Responsive sizing: scales with viewport width with sensible
+      // floor/ceiling so it stays legible on phones and tasteful on desktops.
+      const fontSize = Math.max(
+        13,
+        Math.min(30, Math.min(width / 28, height / 28)),
+      );
       slotFontSize = fontSize;
-      const lineHeight = fontSize * 1.45;
-      const maxW = width * 0.82;
+      const lineHeight = fontSize * 1.5;
+      const maxW = Math.min(width * 0.88, 900);
       ctx.font = `bold ${fontSize}px Arial, sans-serif`;
-      const words = quote.split(" ");
-      const lines: string[] = [];
-      let cur = "";
-      for (const w of words) {
-        const test = cur ? `${cur} ${w}` : w;
-        if (ctx.measureText(test).width > maxW && cur) {
-          lines.push(cur);
-          cur = w;
-        } else {
-          cur = test;
+
+      const wrap = (text: string): string[] => {
+        const words = text.split(" ");
+        const lines: string[] = [];
+        let cur = "";
+        for (const w of words) {
+          const test = cur ? `${cur} ${w}` : w;
+          if (ctx.measureText(test).width > maxW && cur) {
+            lines.push(cur);
+            cur = w;
+          } else {
+            cur = test;
+          }
         }
-      }
-      if (cur) lines.push(cur);
-      const bottomMargin = Math.max(70, height * 0.12);
+        if (cur) lines.push(cur);
+        return lines;
+      };
+
+      const quoteLines = wrap(quote);
+      const authorLine = author ? `— ${author}` : "";
+      const totalLines = quoteLines.length + (authorLine ? 2 : 0); // +1 spacer
+      const bottomMargin = Math.max(60, height * 0.1);
       const startY =
-        height - bottomMargin - lines.length * lineHeight + lineHeight / 2;
+        height - bottomMargin - totalLines * lineHeight + lineHeight / 2;
       const out: Slot[] = [];
-      for (let li = 0; li < lines.length; li++) {
-        const line = lines[li];
+
+      const layoutLine = (line: string, y: number) => {
         const lineW = ctx.measureText(line).width;
         let x = (width - lineW) / 2;
-        const y = startY + li * lineHeight;
         for (const ch of line) {
           const chW = ctx.measureText(ch).width;
-          if (ch !== " ") {
-            out.push({ x: x + chW / 2, y, char: ch });
-          }
+          if (ch !== " ") out.push({ x: x + chW / 2, y, char: ch, claimed: false });
           x += chW;
         }
+      };
+
+      for (let li = 0; li < quoteLines.length; li++) {
+        layoutLine(quoteLines[li], startY + li * lineHeight);
+      }
+      if (authorLine) {
+        // Blank spacer line, then author on its own line.
+        const ay = startY + (quoteLines.length + 1) * lineHeight;
+        layoutLine(authorLine, ay);
       }
       return out;
     };
 
     const ensureSlots = () => {
-      const sig = `${quoteRef.current}|${width}|${height}`;
+      const sig = `${quoteRef.current}|${quoteAuthorRef.current}|${width}|${height}`;
       if (sig === slotsSig && slots.length) return;
       slotsSig = sig;
       slots = layoutQuote();
-      nextSlot = 0;
       // Drop any in-flight (unsettled) rain so we don't double-fill slots.
       for (let i = droplets.length - 1; i >= 0; i--) {
         if (droplets[i].falling && !droplets[i].settled) {
@@ -308,6 +327,7 @@ function ExperimentsPage() {
         }
       }
     };
+
 
 
 
@@ -348,7 +368,7 @@ function ExperimentsPage() {
     let raf = 0;
     let last = performance.now();
     let t = 0;
-    let lastPoolSig = "";
+    let lastSeedTick = -1;
 
     const render = (now: number) => {
       let dt = (now - last) / 1000;
@@ -356,17 +376,39 @@ function ExperimentsPage() {
       if (dt > 0.05) dt = 0.05;
       t += dt;
 
-      // When the quote arrives (or changes), re-roll every cloud droplet's
-      // char from the quote-weighted pool so matches become possible.
-      const poolSig = `${charPoolRef.current.length}|${quoteRef.current}`;
-      if (poolSig !== lastPoolSig) {
-        lastPoolSig = poolSig;
+      // When the quote arrives, SEED clouds with the actual quote
+      // characters so every glyph the quote needs is guaranteed to exist
+      // somewhere in the clouds. We also sprinkle in the weighted pool
+      // for visual variety. This is the "cheat" that lets the cloud
+      // motion feel natural while still being able to finish the quote.
+      if (quoteSeedTickRef.current !== lastSeedTick && quoteReadyRef.current) {
+        lastSeedTick = quoteSeedTickRef.current;
         const pool = charPoolRef.current;
-        if (pool.length) {
-          for (const d of droplets) {
-            if (!d.falling) {
-              d.char = pool[Math.floor(Math.random() * pool.length)];
-            }
+        const needed: string[] = [];
+        for (const ch of quoteRef.current + quoteAuthorRef.current) {
+          if (ch !== " ") needed.push(ch);
+        }
+        // Eligible droplets: non-falling, non-tendril (so the cloud body
+        // visibly contains the quote chars).
+        const eligible: number[] = [];
+        for (let di = 0; di < droplets.length; di++) {
+          const d = droplets[di];
+          if (!d.falling && !d.tendril) eligible.push(di);
+        }
+        // Shuffle eligible indices.
+        for (let i = eligible.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [eligible[i], eligible[j]] = [eligible[j], eligible[i]];
+        }
+        // First, plant every needed char into a unique droplet (cycling
+        // if there are fewer eligible droplets than chars).
+        for (let i = 0; i < eligible.length; i++) {
+          if (i < needed.length) {
+            droplets[eligible[i]].char = needed[i];
+          } else if (pool.length) {
+            // Remaining droplets get random pool chars.
+            droplets[eligible[i]].char =
+              pool[Math.floor(Math.random() * pool.length)];
           }
         }
       }
@@ -444,20 +486,30 @@ function ExperimentsPage() {
         c.vy += (targetY - c.ay) * 0.002;
         c.vy *= Math.exp(-0.6 * dt);
 
-        // Rain spawning: once slowed, wait for one of this cloud's own
-        // (static) droplets to be both the right glyph AND currently at
-        // the bottom of the cloud body — where rain physically drips
-        // from. As the fluid churns, matching droplets occasionally
-        // surface at the underside and fall away. Formation speed is
-        // governed by the cloud's fluid motion, not by char shuffling.
+        // Rain spawning: non-linear. Each cloud scans its own underside
+        // for any droplet whose char matches ANY unclaimed slot. When it
+        // finds one, that droplet falls into a (randomly chosen) matching
+        // slot. Slots can fill out of order so the quote materializes in
+        // a natural, scattered way.
         if (c.slowed && quoteReadyRef.current) {
           c.rainTimer += dt;
-          const interval = 0.05; // how often we *attempt* a claim
+          const interval = 0.05;
           while (c.rainTimer >= interval) {
             c.rainTimer -= interval;
             ensureSlots();
-            if (nextSlot >= slots.length) break;
-            const needed = slots[nextSlot].char;
+            if (!slots.length) break;
+            // Build a map of unclaimed slot chars → slot indices.
+            const needMap = new Map<string, number[]>();
+            let unclaimed = 0;
+            for (let si = 0; si < slots.length; si++) {
+              if (!slots[si].claimed) {
+                unclaimed++;
+                const arr = needMap.get(slots[si].char);
+                if (arr) arr.push(si);
+                else needMap.set(slots[si].char, [si]);
+              }
+            }
+            if (!unclaimed) break;
             const cloudIdx = i;
             const matches: number[] = [];
             for (let di = 0; di < droplets.length; di++) {
@@ -466,27 +518,22 @@ function ExperimentsPage() {
                 dd.cloud === cloudIdx &&
                 !dd.tendril &&
                 !dd.falling &&
-                dd.char === needed &&
-                // Must be on the underside of the cloud body (below the
-                // anchor) — that's where droplets coalesce and fall.
+                needMap.has(dd.char) &&
                 dd.y > c.ay + 10
               ) {
                 matches.push(di);
               }
             }
-            if (!matches.length) break; // wait for fluid motion to surface one
-            // Prefer the droplet currently lowest in the cloud — the one
-            // most ready to fall.
-            let pickIdx = matches[0];
-            let pickY = droplets[pickIdx].y;
-            for (const mi of matches) {
-              if (droplets[mi].y > pickY) {
-                pickY = droplets[mi].y;
-                pickIdx = mi;
-              }
-            }
+            if (!matches.length) break;
+            // Pick a random matching droplet so different letters of the
+            // quote fall first on different attempts — not always the lowest.
+            const pickIdx = matches[Math.floor(Math.random() * matches.length)];
             const pick = droplets[pickIdx];
-            const slot = slots[nextSlot++];
+            const slotChoices = needMap.get(pick.char)!;
+            const slotIdx =
+              slotChoices[Math.floor(Math.random() * slotChoices.length)];
+            const slot = slots[slotIdx];
+            slot.claimed = true;
             pick.falling = true;
             pick.targetX = slot.x;
             pick.targetY = slot.y;
