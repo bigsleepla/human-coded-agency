@@ -198,25 +198,26 @@ function ExperimentsPage() {
   // a cloud and be claimed when its slot needs to be filled).
   const charPoolRef = useRef<string[]>(CHARS.split(""));
 
+  const quoteAuthorRef = useRef<string>("");
+  const quoteSeedTickRef = useRef<number>(0);
+
   useEffect(() => {
     let cancelled = false;
     fetchQuote()
       .then((q) => {
         if (cancelled) return;
-        const txt = `${q.quote} — ${q.author}`.toUpperCase();
-        quoteRef.current = txt.replace(/\s+/g, " ").trim();
-        // Build a char pool weighted by the quote's letter frequency so
-        // that common letters appear more often in clouds — increasing
-        // the odds of matches without making it deterministic.
+        const body = q.quote.toUpperCase().replace(/\s+/g, " ").trim();
+        const author = q.author.toUpperCase().replace(/\s+/g, " ").trim();
+        quoteRef.current = body;
+        quoteAuthorRef.current = author;
         const pool: string[] = [];
-        for (const ch of quoteRef.current) {
+        for (const ch of body + " " + author) {
           if (ch !== " ") pool.push(ch);
         }
-        // Sprinkle in a few extra alphabet chars so clouds still look
-        // varied and not just a re-shuffling of the quote.
         for (const ch of CHARS) pool.push(ch);
         charPoolRef.current = pool;
         quoteReadyRef.current = true;
+        quoteSeedTickRef.current += 1;
       })
       .catch(() => {});
     return () => {
