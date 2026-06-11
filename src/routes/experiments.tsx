@@ -8,13 +8,29 @@ export const Route = createFileRoute("/experiments")({
 // Each character is a droplet of water. Together, their pairwise
 // interactions (repulsion + viscosity + cohesion back to a slowly drifting
 // home) cause them to behave like a fluid body — a cloud.
+type Tendril = {
+  // Anchor point on the cloud body where the strand roots.
+  rootX: number;
+  rootY: number;
+  // Position along the strand, 0 at the root, 1 at the tip.
+  t: number;
+  // Strand-wide identifier so droplets on the same strand share a wave.
+  strand: number;
+  // Length of this strand (px) and lateral wave parameters.
+  length: number;
+  waveFreq: number;
+  wavePhase: number;
+  waveAmp: number;
+};
+
 type Droplet = {
   x: number;
   y: number;
   vx: number;
   vy: number;
   // Home offset relative to its parent cloud's anchor — gives the cloud
-  // its overall silhouette while letting droplets jostle freely.
+  // its overall silhouette while letting droplets jostle freely. For
+  // tendril droplets this is recomputed each frame from `tendril`.
   hx: number;
   hy: number;
   cloud: number; // index of parent cloud
@@ -24,6 +40,7 @@ type Droplet = {
   rot: number;
   rotVel: number;
   edge: number; // 0 = core, 1 = outer fringe — loosens cohesion + fades alpha
+  tendril?: Tendril;
 };
 
 type Cloud = {
@@ -99,6 +116,60 @@ function seedCloud(
     });
   }
   cloud.radius = maxR + 60 * scale;
+
+  // Seed 2-4 long tendrils per cloud. Each is a chain of droplets that
+  // anchor at a point on the cloud body and trail behind the cloud (the
+  // strand direction is computed at runtime from the cloud's velocity).
+  const strandCount = 2 + Math.floor(Math.random() * 3);
+  for (let s = 0; s < strandCount; s++) {
+    // Root somewhere on the silhouette — sample one of the blobs and pick
+    // a point near its rim so the tendril emerges from a visible lobe.
+    const blob = blobs[Math.floor(Math.random() * blobs.length)];
+    const rootAngle = Math.random() * Math.PI * 2;
+    const rootRadius = blob.r * (0.65 + Math.random() * 0.3);
+    const rootX = blob.x + Math.cos(rootAngle) * rootRadius;
+    const rootY = blob.y + Math.sin(rootAngle) * rootRadius * 0.65;
+
+    const length = (180 + Math.random() * 260) * scale;
+    const beadCount = 14 + Math.floor(Math.random() * 14);
+    const waveFreq = 1.2 + Math.random() * 2.2;
+    const wavePhase = Math.random() * Math.PI * 2;
+    const waveAmp = (10 + Math.random() * 26) * scale;
+
+    for (let i = 0; i < beadCount; i++) {
+      // Slight clustering toward the root so the strand thins to a wisp.
+      const tt = Math.pow((i + 0.5) / beadCount, 0.9);
+      const jitterX = (Math.random() - 0.5) * 6 * scale;
+      const jitterY = (Math.random() - 0.5) * 6 * scale;
+      const edge = 0.6 + 0.4 * tt; // very loose; pure vapor at the tip
+      const alpha = (1 - tt * 0.85) * (0.35 + Math.random() * 0.25) + 0.04;
+      droplets.push({
+        x: cloud.ax + rootX,
+        y: cloud.ay + rootY,
+        vx: 0,
+        vy: 0,
+        hx: rootX + jitterX,
+        hy: rootY + jitterY,
+        cloud: cloudIndex,
+        char: CHARS[Math.floor(Math.random() * CHARS.length)],
+        size: (18 + Math.random() * 18) * scale * (1 - tt * 0.45),
+        alpha: Math.min(0.85, Math.max(0.04, alpha)),
+        rot: (Math.random() - 0.5) * Math.PI,
+        rotVel: (Math.random() - 0.5) * 0.4,
+        edge,
+        tendril: {
+          rootX: rootX + jitterX,
+          rootY: rootY + jitterY,
+          t: tt,
+          strand: s,
+          length,
+          waveFreq,
+          wavePhase,
+          waveAmp,
+        },
+      });
+    }
+  }
 }
 
 function ExperimentsPage() {
@@ -295,9 +366,37 @@ function ExperimentsPage() {
         // Cohesion: spring back toward home offset. Edge droplets are
         // bound far more loosely — they trail off as vapor, get caught up
         // by other passing clouds, and let bodies appear to merge.
-        const cohesionScale = COHESION * (1 - 0.85 * d.edge);
-        const tx = c.ax + d.hx;
-        const ty = c.ay + d.hy;
+        // Tendril droplets recompute their home each frame so the strand
+        // points opposite the cloud's velocity and curves with a wave.
+        let hx = d.hx;
+        let hy = d.hy;
+        if (d.tendril) {
+          const tn = d.tendril;
+          const speed = Math.hypot(c.vx, c.vy) || 1;
+          // Direction the strand trails — opposite the cloud's motion.
+          const dirX = -c.vx / speed;
+          const dirY = -c.vy / speed;
+          // Perpendicular for lateral waving.
+          const perpX = -dirY;
+          const perpY = dirX;
+          const along = tn.t * tn.length;
+          // Strand droops slightly as it stretches.
+          const droop = tn.t * tn.t * 18;
+          // Lateral wave grows toward the tip; phase travels along strand.
+          const wave =
+            Math.sin(tn.t * tn.waveFreq * Math.PI - t * 1.4 + tn.wavePhase) *
+            tn.waveAmp *
+            tn.t;
+          hx = tn.rootX + dirX * along + perpX * wave;
+          hy = tn.rootY + dirY * along + perpY * wave + droop;
+          // Keep d.hx/d.hy in sync for any code that reads them.
+          d.hx = hx;
+          d.hy = hy;
+        }
+        const cohesionScale =
+          COHESION * (1 - 0.85 * d.edge) * (d.tendril ? 0.6 : 1);
+        const tx = c.ax + hx;
+        const ty = c.ay + hy;
         const sx = (tx - d.x) * cohesionScale;
         const sy = (ty - d.y) * cohesionScale;
 
