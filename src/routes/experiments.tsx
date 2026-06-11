@@ -759,21 +759,16 @@ function ExperimentsPage() {
         let axi = ax[i] + sx;
         let ayi = ay[i] + sy;
 
-        // Quote-character droplets carry "weight" — a persistent downward
-        // acceleration that pushes them toward the underside of the cloud
-        // where they can peel off as rain. Tendril/vapor droplets stay
-        // weightless so the silhouette still drifts naturally.
-        // Quote-character droplets carry a small "weight" — only applied
-        // once they're at or below their home position, so they nudge
-        // toward the underside to peel off as rain WITHOUT dragging the
-        // whole cloud body downward.
+        // Seeded quote glyphs carry weight: only the explicitly planted
+        // quote/author characters sink, which keeps the cloud high while
+        // making those exact droplets push toward the underside and rain.
         if (
           !d.tendril &&
-          quoteCharSetRef.current.has(d.char) &&
+          d.quoteGlyph &&
           quoteReadyRef.current &&
-          d.y >= c.ay + d.hy
+          d.y >= c.ay + d.hy - 8
         ) {
-          ayi += 70;
+          ayi += 180;
         }
 
         // Turbulence — stronger for outer/vapor droplets.
