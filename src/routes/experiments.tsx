@@ -495,8 +495,7 @@ function ExperimentsPage() {
           <span style={{ marginRight: "6px" }}>|</span>HUMAN
         </div>
         <div
-          className="text-[40px] md:text-[60px] lg:text-[90px]"
-          style={{ marginLeft: "18px" }}
+          className="text-[40px] md:text-[60px] lg:text-[90px] lg:ml-[42px] ml-[18px]"
         >
           -CODED
         </div>
