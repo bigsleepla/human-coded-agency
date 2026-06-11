@@ -173,7 +173,8 @@ function ExperimentsPage() {
         if (c.ax + c.radius < -50) {
           c.ax = width + 200 + Math.random() * 400;
           c.ay = 90 + Math.random() * Math.max(60, height * 0.18);
-          c.vx = -(10 + Math.random() * 12);
+          c.vx = -(6 + Math.random() * 28);
+          c.vy = (Math.random() - 0.5) * 4;
           // teleport droplets so they don't streak across the screen
           for (const d of droplets) {
             if (d.cloud === clouds.indexOf(c)) {
@@ -184,6 +185,46 @@ function ExperimentsPage() {
             }
           }
         }
+      }
+
+      // Cloud-cloud anchor physics: soft elastic collisions so cloud bodies
+      // bounce / glance off each other while their droplets intermingle and
+      // appear to merge. Anchors carry "momentum" via vx/vy.
+      for (let i = 0; i < clouds.length; i++) {
+        for (let j = i + 1; j < clouds.length; j++) {
+          const a = clouds[i];
+          const b = clouds[j];
+          const dx = b.ax - a.ax;
+          const dy = b.ay - a.ay;
+          const dist = Math.hypot(dx, dy) || 0.0001;
+          const minDist = (a.radius + b.radius) * 0.7;
+          if (dist < minDist) {
+            const overlap = (minDist - dist) / minDist; // 0..1
+            const nx = dx / dist;
+            const ny = dy / dist;
+            // Soft repulsion proportional to overlap (bounce).
+            const push = overlap * 60;
+            a.vx -= nx * push * dt;
+            a.vy -= ny * push * dt;
+            b.vx += nx * push * dt;
+            b.vy += ny * push * dt;
+            // Mild damping on the collision normal so they don't oscillate.
+            const relV = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+            if (relV < 0) {
+              const j2 = -relV * 0.25;
+              a.vx -= nx * j2;
+              a.vy -= ny * j2;
+              b.vx += nx * j2;
+              b.vy += ny * j2;
+            }
+          }
+        }
+        // Keep clouds drifting leftward overall and stay near the top band.
+        const c = clouds[i];
+        c.vx += (-14 - c.vx) * 0.02 * dt * 5;
+        const targetY = 110 + (i % 2) * 40;
+        c.vy += (targetY - c.ay) * 0.002;
+        c.vy *= Math.exp(-0.6 * dt);
       }
 
       // Build spatial hash
