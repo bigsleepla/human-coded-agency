@@ -67,14 +67,17 @@ function seedCloud(
         break;
       }
     }
-    const u = (Math.random() + Math.random()) / 2; // bias toward center
+    // Bias toward edge to give a fuzzier, more diffuse silhouette.
+    const u = Math.sqrt(Math.random());
     const radius = u * chosen.r;
     const angle = Math.random() * Math.PI * 2;
     const hx = chosen.x + Math.cos(angle) * radius;
     const hy = chosen.y + Math.sin(angle) * radius * 0.65;
 
-    const distFromBlob = radius / chosen.r;
-    const alpha = (1 - distFromBlob * 0.6) * (0.35 + chosen.w * 0.55);
+    const distFromBlob = radius / chosen.r; // 0 center .. 1 edge
+    const edge = Math.min(1, distFromBlob);
+    // Sharper falloff at the perimeter so edges feel like vapor.
+    const alpha = Math.pow(1 - edge, 1.6) * (0.4 + chosen.w * 0.55) + 0.05;
 
     const rabs = Math.hypot(hx, hy);
     if (rabs > maxR) maxR = rabs;
@@ -88,10 +91,11 @@ function seedCloud(
       hy,
       cloud: cloudIndex,
       char: CHARS[Math.floor(Math.random() * CHARS.length)],
-      size: (22 + Math.random() * 26) * scale,
-      alpha: Math.min(0.95, Math.max(0.1, alpha)),
+      size: (20 + Math.random() * 26) * scale,
+      alpha: Math.min(0.9, Math.max(0.06, alpha)),
       rot: (Math.random() - 0.5) * Math.PI,
       rotVel: (Math.random() - 0.5) * 0.4,
+      edge,
     });
   }
   cloud.radius = maxR + 60 * scale;
