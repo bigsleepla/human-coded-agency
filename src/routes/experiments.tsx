@@ -366,9 +366,37 @@ function ExperimentsPage() {
         // Cohesion: spring back toward home offset. Edge droplets are
         // bound far more loosely — they trail off as vapor, get caught up
         // by other passing clouds, and let bodies appear to merge.
-        const cohesionScale = COHESION * (1 - 0.85 * d.edge);
-        const tx = c.ax + d.hx;
-        const ty = c.ay + d.hy;
+        // Tendril droplets recompute their home each frame so the strand
+        // points opposite the cloud's velocity and curves with a wave.
+        let hx = d.hx;
+        let hy = d.hy;
+        if (d.tendril) {
+          const tn = d.tendril;
+          const speed = Math.hypot(c.vx, c.vy) || 1;
+          // Direction the strand trails — opposite the cloud's motion.
+          const dirX = -c.vx / speed;
+          const dirY = -c.vy / speed;
+          // Perpendicular for lateral waving.
+          const perpX = -dirY;
+          const perpY = dirX;
+          const along = tn.t * tn.length;
+          // Strand droops slightly as it stretches.
+          const droop = tn.t * tn.t * 18;
+          // Lateral wave grows toward the tip; phase travels along strand.
+          const wave =
+            Math.sin(tn.t * tn.waveFreq * Math.PI - t * 1.4 + tn.wavePhase) *
+            tn.waveAmp *
+            tn.t;
+          hx = tn.rootX + dirX * along + perpX * wave;
+          hy = tn.rootY + dirY * along + perpY * wave + droop;
+          // Keep d.hx/d.hy in sync for any code that reads them.
+          d.hx = hx;
+          d.hy = hy;
+        }
+        const cohesionScale =
+          COHESION * (1 - 0.85 * d.edge) * (d.tendril ? 0.6 : 1);
+        const tx = c.ax + hx;
+        const ty = c.ay + hy;
         const sx = (tx - d.x) * cohesionScale;
         const sy = (ty - d.y) * cohesionScale;
 
