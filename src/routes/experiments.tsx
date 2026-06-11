@@ -230,7 +230,12 @@ function ExperimentsPage() {
   }, []);
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem)] bg-background text-foreground">
+    <div className="relative min-h-[calc(100vh-3.5rem)] bg-background text-foreground">
+      <img
+        src={icon.url}
+        alt="Human-Coded"
+        className="absolute top-4 left-4 z-10 h-12 w-auto select-none pointer-events-none"
+      />
       <canvas
         ref={canvasRef}
         className="block w-full h-[calc(100vh-3.5rem)]"
