@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { getQuoteOfTheDay } from "@/lib/quotes.functions";
 import { CookieBanner } from "@/components/cookie-banner";
 import { SiteNav } from "@/components/site-nav";
+import { SiteLogo } from "@/components/site-logo";
 
 export const Route = createFileRoute("/home")({
   component: ExperimentsPage,
@@ -933,24 +934,7 @@ function ExperimentsPage() {
         background: `linear-gradient(to bottom, oklch(0.25 0.005 85), var(--background))`,
       }}
     >
-      <Link
-        to="/home"
-        aria-label="Human-Coded — Home"
-        className="absolute top-10 left-10 z-10 select-none font-normal leading-[0.95] tracking-tight text-white no-underline"
-        style={{
-          fontFamily:
-            'Garet, "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif',
-        }}
-      >
-        <div className="text-[40px] md:text-[60px] lg:text-[90px] italic">
-          <span style={{ marginRight: "6px" }}>|</span>HUMAN
-        </div>
-        <div
-          className="text-[40px] md:text-[60px] lg:text-[90px] lg:ml-[42px] ml-[18px]"
-        >
-          -CODED
-        </div>
-      </Link>
+      <SiteLogo variant="light" />
       <SiteNav />
       <CookieBanner />
       <canvas
