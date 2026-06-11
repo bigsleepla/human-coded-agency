@@ -292,25 +292,28 @@ function ExperimentsPage() {
         const d = droplets[i];
         const c = clouds[d.cloud];
 
-        // Cohesion: spring back toward home offset within the cloud, so
-        // the cloud retains its silhouette while drifting.
+        // Cohesion: spring back toward home offset. Edge droplets are
+        // bound far more loosely — they trail off as vapor, get caught up
+        // by other passing clouds, and let bodies appear to merge.
+        const cohesionScale = COHESION * (1 - 0.85 * d.edge);
         const tx = c.ax + d.hx;
         const ty = c.ay + d.hy;
-        const sx = (tx - d.x) * COHESION;
-        const sy = (ty - d.y) * COHESION;
+        const sx = (tx - d.x) * cohesionScale;
+        const sy = (ty - d.y) * cohesionScale;
 
         let axi = ax[i] + sx;
         let ayi = ay[i] + sy;
 
-        // Subtle turbulence (curl-noise-ish) so neighbours swirl gently.
+        // Turbulence — stronger for outer/vapor droplets.
+        const turb = 12 + d.edge * 28;
         const tNoiseX =
           Math.sin(d.x * 0.012 + t * 0.7 + d.cloud) +
           Math.cos(d.y * 0.013 - t * 0.5);
         const tNoiseY =
           Math.cos(d.x * 0.011 - t * 0.6 + d.cloud * 1.3) +
           Math.sin(d.y * 0.014 + t * 0.8);
-        axi += tNoiseX * 14;
-        ayi += tNoiseY * 10;
+        axi += tNoiseX * turb;
+        ayi += tNoiseY * turb * 0.75;
 
         d.vx += axi * dt;
         d.vy += ayi * dt;
