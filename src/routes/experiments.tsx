@@ -730,6 +730,18 @@ function ExperimentsPage() {
         let axi = ax[i] + sx;
         let ayi = ay[i] + sy;
 
+        // Quote-character droplets carry "weight" — a persistent downward
+        // acceleration that pushes them toward the underside of the cloud
+        // where they can peel off as rain. Tendril/vapor droplets stay
+        // weightless so the silhouette still drifts naturally.
+        if (
+          !d.tendril &&
+          quoteCharSetRef.current.has(d.char) &&
+          quoteReadyRef.current
+        ) {
+          ayi += 260;
+        }
+
         // Turbulence — stronger for outer/vapor droplets.
         const turb = 12 + d.edge * 28;
         const tNoiseX =
