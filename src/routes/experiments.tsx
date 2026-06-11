@@ -349,7 +349,7 @@ function ExperimentsPage() {
       const scale = 0.8 + Math.random() * 0.55;
       const cloud: Cloud = {
         ax: width + 200 + i * (320 + Math.random() * 260),
-        ay: 90 + Math.random() * Math.max(60, height * 0.18),
+        ay: 35 + Math.random() * 35,
         // Wider speed spread so faster clouds overtake slower ones and collide.
         vx: -(6 + Math.random() * 28),
         vy: (Math.random() - 0.5) * 4,
