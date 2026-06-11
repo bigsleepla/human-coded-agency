@@ -1,9 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef } from "react";
 import { getQuoteOfTheDay } from "@/lib/quotes.functions";
+import { CookieBanner } from "@/components/cookie-banner";
+import { SiteNav } from "@/components/site-nav";
 
-export const Route = createFileRoute("/experiments")({
+export const Route = createFileRoute("/home")({
   component: ExperimentsPage,
 });
 
@@ -877,9 +879,10 @@ function ExperimentsPage() {
         background: `linear-gradient(to bottom, oklch(0.25 0.005 85), var(--background))`,
       }}
     >
-      <div
-        aria-label="Human-Coded"
-        className="absolute top-10 left-10 z-10 select-none pointer-events-none font-normal leading-[0.95] tracking-tight text-white"
+      <Link
+        to="/home"
+        aria-label="Human-Coded — Home"
+        className="absolute top-10 left-10 z-10 select-none font-normal leading-[0.95] tracking-tight text-white no-underline"
         style={{
           fontFamily:
             'Garet, "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif',
@@ -893,7 +896,9 @@ function ExperimentsPage() {
         >
           -CODED
         </div>
-      </div>
+      </Link>
+      <SiteNav />
+      <CookieBanner />
       <canvas
         ref={canvasRef}
         className="block w-full h-[calc(100vh-3.5rem)]"
