@@ -3,6 +3,7 @@ import { Kanban, Compass, FileText, Users, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import logoAsset from "@/assets/logo-human-coded.png.asset.json";
 
 export const Route = createFileRoute("/_app")({
   component: AppShell,
@@ -35,8 +36,12 @@ function AppShell() {
     <div className="flex min-h-screen w-full bg-background text-foreground">
       <aside className="flex w-60 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
         <div className="px-5 py-5">
-          <div className="text-sm font-semibold tracking-tight">Human-Coded</div>
-          <div className="text-xs text-muted-foreground">Agency Portal</div>
+          <img
+            src={logoAsset.url}
+            alt="Human-Coded"
+            className="h-8 w-auto"
+          />
+          <div className="mt-1 text-xs text-muted-foreground">Agency Portal</div>
         </div>
         <nav className="flex-1 space-y-1 px-2">
           {NAV.map((item) => {
