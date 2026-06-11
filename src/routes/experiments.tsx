@@ -407,16 +407,17 @@ function ExperimentsPage() {
         c.vy += (targetY - c.ay) * 0.002;
         c.vy *= Math.exp(-0.6 * dt);
 
-        // Rain spawning: once slowed, drip the quote characters in sequence
-        // from random core droplets of this cloud.
+        // Rain spawning: once slowed, drip the quote characters from this
+        // cloud, each assigned to the next empty slot in the laid-out quote.
         if (c.slowed) {
           c.rainTimer += dt;
-          const interval = 0.07; // seconds between drops per cloud
+          const interval = 0.06; // seconds between drops per cloud
           while (c.rainTimer >= interval) {
             c.rainTimer -= interval;
-            const quote = quoteRef.current;
-            if (!quote.length) break;
-            // Pick a core (non-tendril, non-falling, low-edge) droplet of this cloud.
+            ensureSlots();
+            if (nextSlot >= slots.length) break;
+            // Pick a core (non-tendril, non-falling, low-edge) droplet of
+            // this cloud as the visual source of the drop.
             const cloudIdx = i;
             const candidates: number[] = [];
             for (let di = 0; di < droplets.length; di++) {
@@ -427,14 +428,7 @@ function ExperimentsPage() {
             }
             if (!candidates.length) break;
             const src = droplets[candidates[Math.floor(Math.random() * candidates.length)]];
-            let ch = quote[c.rainIndex % quote.length];
-            c.rainIndex++;
-            // Skip spaces so we don't drop invisible characters.
-            let guard = 0;
-            while (ch === " " && guard++ < 8) {
-              ch = quote[c.rainIndex % quote.length];
-              c.rainIndex++;
-            }
+            const slot = slots[nextSlot++];
             droplets.push({
               x: src.x,
               y: src.y,
@@ -443,18 +437,21 @@ function ExperimentsPage() {
               hx: 0,
               hy: 0,
               cloud: cloudIdx,
-              char: ch,
-              size: 18 + Math.random() * 10,
+              char: slot.char,
+              size: slotFontSize,
               alpha: 0.95,
-              baseAlpha: 0.95,
-              rot: 0,
-              rotVel: 0,
+              baseAlpha: 1,
+              rot: (Math.random() - 0.5) * 0.6,
+              rotVel: (Math.random() - 0.5) * 2,
               edge: 0,
               falling: true,
+              targetX: slot.x,
+              targetY: slot.y,
             });
           }
         }
       }
+
 
       // Build spatial hash
       grid.clear();
