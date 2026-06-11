@@ -771,7 +771,7 @@ function ExperimentsPage() {
           d.hy = hy;
         }
         const cohesionScale =
-          COHESION * (1 - 0.85 * d.edge) * (d.tendril ? 0.6 : 1);
+          COHESION * (1 - 0.45 * d.edge) * (d.tendril ? 0.85 : 1);
         const tx = c.ax + hx;
         const ty = c.ay + hy;
         const sx = (tx - d.x) * cohesionScale;
@@ -791,8 +791,8 @@ function ExperimentsPage() {
           ayi += 320;
         }
 
-        // Turbulence — stronger for outer/vapor droplets.
-        const turb = 12 + d.edge * 28;
+        // Turbulence — gentle so droplets don't smear across the page.
+        const turb = 6 + d.edge * 10;
         const tNoiseX =
           Math.sin(d.x * 0.012 + t * 0.7 + d.cloud) +
           Math.cos(d.y * 0.013 - t * 0.5);
