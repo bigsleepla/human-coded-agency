@@ -348,12 +348,45 @@ function ExperimentsPage() {
     let raf = 0;
     let last = performance.now();
     let t = 0;
+    let lastPoolSig = "";
 
     const render = (now: number) => {
       let dt = (now - last) / 1000;
       last = now;
       if (dt > 0.05) dt = 0.05;
       t += dt;
+
+      // When the quote arrives (or changes), re-roll every cloud droplet's
+      // char from the quote-weighted pool so matches become possible.
+      const poolSig = `${charPoolRef.current.length}|${quoteRef.current}`;
+      if (poolSig !== lastPoolSig) {
+        lastPoolSig = poolSig;
+        const pool = charPoolRef.current;
+        if (pool.length) {
+          for (const d of droplets) {
+            if (!d.falling) {
+              d.char = pool[Math.floor(Math.random() * pool.length)];
+            }
+          }
+        }
+      }
+
+      // Cloud shimmer: each frame, re-roll a small fraction of cloud
+      // droplets' chars. This is what makes formation speed *random* —
+      // a slot waits until the cloud happens to roll the needed glyph.
+      if (charPoolRef.current.length) {
+        const pool = charPoolRef.current;
+        const shimmerRate = 0.6; // ~60% of droplets re-roll per second
+        const k = Math.max(1, Math.floor(droplets.length * shimmerRate * dt));
+        for (let n = 0; n < k; n++) {
+          const idx = Math.floor(Math.random() * droplets.length);
+          const d = droplets[idx];
+          if (!d.falling && !d.tendril) {
+            d.char = pool[Math.floor(Math.random() * pool.length)];
+          }
+        }
+      }
+
 
       // Advance cloud anchors (wind) and wrap.
       for (const c of clouds) {
