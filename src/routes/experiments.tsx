@@ -398,42 +398,62 @@ function ExperimentsPage() {
         const needed: string[] = [];
         const rainText =
           quoteRef.current +
-          (quoteAuthorRef.current ? `—${quoteAuthorRef.current}` : "");
+          (quoteAuthorRef.current ? ` — ${quoteAuthorRef.current}` : "");
         for (const ch of rainText) {
           if (ch !== " ") needed.push(ch);
         }
+        // Over-seed em dashes so the author attribution doesn't bottleneck
+        // on a single rare droplet.
+        for (let i = 0; i < 10; i++) needed.push("—");
         // Shuffle required glyphs so the cloud is seeded non-linearly rather
         // than reading left-to-right inside the vapor.
         for (let i = needed.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [needed[i], needed[j]] = [needed[j], needed[i]];
         }
-        // Eligible droplets: non-falling, non-tendril (so the cloud body
-        // visibly contains the quote chars). Bias guaranteed quote glyphs
-        // toward the underside so their weight makes them rain from clouds,
-        // not appear directly in the finished quote.
-        const eligible: number[] = [];
+        // Group eligible droplets by cloud so quote glyphs are distributed
+        // across every cloud (not concentrated in one), and within each
+        // cloud bias toward the underside so weight drops them out fast.
+        const byCloud = new Map<number, number[]>();
         for (let di = 0; di < droplets.length; di++) {
           const d = droplets[di];
           if (!d.falling && !d.tendril) {
             d.quoteGlyph = false;
-            eligible.push(di);
+            const arr = byCloud.get(d.cloud);
+            if (arr) arr.push(di);
+            else byCloud.set(d.cloud, [di]);
           }
         }
-        eligible.sort(
-          (a, b) =>
-            droplets[b].hy + Math.random() * 90 -
-            (droplets[a].hy + Math.random() * 90),
-        );
-        // First, plant every needed char into a unique droplet (cycling
-        // if there are fewer eligible droplets than chars).
+        for (const arr of byCloud.values()) {
+          arr.sort(
+            (a, b) =>
+              droplets[b].hy + Math.random() * 60 -
+              (droplets[a].hy + Math.random() * 60),
+          );
+        }
+        // Round-robin pick across clouds so every cloud gets quote glyphs.
+        const cloudKeys = Array.from(byCloud.keys());
+        const cursors = new Map<number, number>(cloudKeys.map((k) => [k, 0]));
+        const eligible: number[] = [];
+        let added = true;
+        while (added) {
+          added = false;
+          for (const k of cloudKeys) {
+            const arr = byCloud.get(k)!;
+            const idx = cursors.get(k)!;
+            if (idx < arr.length) {
+              eligible.push(arr[idx]);
+              cursors.set(k, idx + 1);
+              added = true;
+            }
+          }
+        }
         for (let i = 0; i < eligible.length; i++) {
           if (i < needed.length) {
             const d = droplets[eligible[i]];
             d.char = needed[i];
             d.quoteGlyph = true;
           } else if (pool.length) {
-            // Remaining droplets get random pool chars.
             const d = droplets[eligible[i]];
             d.char = pool[Math.floor(Math.random() * pool.length)];
             d.quoteGlyph = quoteCharSetRef.current.has(d.char);
@@ -765,10 +785,9 @@ function ExperimentsPage() {
         if (
           !d.tendril &&
           d.quoteGlyph &&
-          quoteReadyRef.current &&
-          d.y >= c.ay + d.hy - 8
+          quoteReadyRef.current
         ) {
-          ayi += 180;
+          ayi += 320;
         }
 
         // Turbulence — stronger for outer/vapor droplets.
