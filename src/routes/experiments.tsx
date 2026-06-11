@@ -5,116 +5,95 @@ export const Route = createFileRoute("/experiments")({
   component: ExperimentsPage,
 });
 
-type Particle = {
-  ox: number;
-  oy: number;
-  phase: number;
-  freq: number;
-  amp: number;
-  driftPhaseX: number;
-  driftPhaseY: number;
-  driftFreqX: number;
-  driftFreqY: number;
-  driftAmpX: number;
-  driftAmpY: number;
-  rot: number;
-  rotSpeed: number;
-  rotPhase: number;
-  rotAmp: number;
-  char: string;
-  size: number;
-  alpha: number;
-};
-
-type CloudBank = {
+// Each character is a droplet of water. Together, their pairwise
+// interactions (repulsion + viscosity + cohesion back to a slowly drifting
+// home) cause them to behave like a fluid body — a cloud.
+type Droplet = {
   x: number;
   y: number;
   vx: number;
   vy: number;
-  bobFreq: number;
-  bobAmp: number;
-  bobPhase: number;
-  particles: Particle[];
-  minOx: number;
-  maxOx: number;
+  // Home offset relative to its parent cloud's anchor — gives the cloud
+  // its overall silhouette while letting droplets jostle freely.
+  hx: number;
+  hy: number;
+  cloud: number; // index of parent cloud
+  char: string;
+  size: number;
+  alpha: number;
+  rot: number;
+  rotVel: number;
+};
+
+type Cloud = {
+  ax: number; // anchor x (drifts with wind)
+  ay: number; // anchor y
+  vx: number; // wind velocity
+  vy: number;
+  radius: number; // for wrap bookkeeping
 };
 
 const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
-function makeCloud(scale: number): CloudBank {
-  const particles: Particle[] = [];
-  const blobCount = 4 + Math.floor(Math.random() * 3);
-  const blobs: { x: number; y: number; r: number; weight: number }[] = [];
+function seedCloud(
+  cloudIndex: number,
+  cloud: Cloud,
+  droplets: Droplet[],
+  scale: number,
+) {
+  // Build the silhouette out of a few overlapping metaball-ish blobs.
+  const blobCount = 3 + Math.floor(Math.random() * 3);
+  const blobs: { x: number; y: number; r: number; w: number }[] = [];
   for (let i = 0; i < blobCount; i++) {
     blobs.push({
-      x: (Math.random() - 0.5) * 320 * scale,
-      y: (Math.random() - 0.5) * 80 * scale,
-      r: (90 + Math.random() * 90) * scale,
-      weight: 0.4 + Math.random() * 0.6,
+      x: (Math.random() - 0.5) * 280 * scale,
+      y: (Math.random() - 0.5) * 70 * scale,
+      r: (80 + Math.random() * 90) * scale,
+      w: 0.5 + Math.random() * 0.6,
     });
   }
-  const totalWeight = blobs.reduce((s, b) => s + b.weight, 0);
-  const count = Math.floor((140 + Math.random() * 140) * scale);
+  const totalW = blobs.reduce((s, b) => s + b.w, 0);
+  const count = Math.floor((90 + Math.random() * 60) * scale);
 
-  let minOx = Infinity;
-  let maxOx = -Infinity;
-
+  let maxR = 0;
   for (let i = 0; i < count; i++) {
-    let r = Math.random() * totalWeight;
+    let r = Math.random() * totalW;
     let chosen = blobs[0];
     for (const b of blobs) {
-      r -= b.weight;
+      r -= b.w;
       if (r <= 0) {
         chosen = b;
         break;
       }
     }
-    const u = (Math.random() + Math.random() + Math.random()) / 3;
+    const u = (Math.random() + Math.random()) / 2; // bias toward center
     const radius = u * chosen.r;
     const angle = Math.random() * Math.PI * 2;
-    const ox = chosen.x + Math.cos(angle) * radius;
-    const oy = chosen.y + Math.sin(angle) * radius * 0.7;
+    const hx = chosen.x + Math.cos(angle) * radius;
+    const hy = chosen.y + Math.sin(angle) * radius * 0.65;
 
-    if (ox < minOx) minOx = ox;
-    if (ox > maxOx) maxOx = ox;
+    const distFromBlob = radius / chosen.r;
+    const alpha = (1 - distFromBlob * 0.6) * (0.35 + chosen.w * 0.55);
 
-    const distNorm = radius / chosen.r;
-    const alpha = (1 - distNorm * 0.65) * (0.3 + chosen.weight * 0.6);
+    const rabs = Math.hypot(hx, hy);
+    if (rabs > maxR) maxR = rabs;
 
-    particles.push({
-      ox,
-      oy,
-      phase: Math.random() * Math.PI * 2,
-      freq: 0.2 + Math.random() * 0.3,
-      amp: 1.5 + Math.random() * 3.5,
-      driftPhaseX: Math.random() * Math.PI * 2,
-      driftPhaseY: Math.random() * Math.PI * 2,
-      driftFreqX: 0.08 + Math.random() * 0.2,
-      driftFreqY: 0.06 + Math.random() * 0.18,
-      driftAmpX: 4 + Math.random() * 10,
-      driftAmpY: 3 + Math.random() * 7,
-      rot: (Math.random() - 0.5) * Math.PI,
-      rotSpeed: (Math.random() - 0.5) * 0.08,
-      rotPhase: Math.random() * Math.PI * 2,
-      rotAmp: 0.1 + Math.random() * 0.35,
+    droplets.push({
+      x: cloud.ax + hx,
+      y: cloud.ay + hy,
+      vx: 0,
+      vy: 0,
+      hx,
+      hy,
+      cloud: cloudIndex,
       char: CHARS[Math.floor(Math.random() * CHARS.length)],
-      size: (22 + Math.random() * 28) * scale,
-      alpha: Math.min(0.95, Math.max(0.08, alpha)),
+      size: (22 + Math.random() * 26) * scale,
+      alpha: Math.min(0.95, Math.max(0.1, alpha)),
+      rot: (Math.random() - 0.5) * Math.PI,
+      rotVel: (Math.random() - 0.5) * 0.4,
     });
   }
-
-  return {
-    x: 0,
-    y: 0,
-    vx: 0,
-    vy: 0,
-    bobFreq: 0.1 + Math.random() * 0.15,
-    bobAmp: 6 + Math.random() * 8,
-    bobPhase: Math.random() * Math.PI * 2,
-    particles,
-    minOx,
-    maxOx,
-  };
+  cloud.radius = maxR + 60 * scale;
 }
 
 function ExperimentsPage() {
@@ -141,80 +120,200 @@ function ExperimentsPage() {
     resize();
     window.addEventListener("resize", resize);
 
-    // A few cloud banks of varying scale, each drifting in from off the
-    // top-right at its own slow pace. Different speeds cause them to
-    // catch up to one another, overlap (collide) and visually merge.
-    const clouds: CloudBank[] = [];
+    const clouds: Cloud[] = [];
+    const droplets: Droplet[] = [];
     const cloudCount = 4;
     for (let i = 0; i < cloudCount; i++) {
-      const scale = 0.75 + Math.random() * 0.6;
-      const c = makeCloud(scale);
-      // Stagger their entry: place each progressively further off-screen
-      // to the right so they drift in one after another.
-      c.x = width + 250 + i * (350 + Math.random() * 200);
-      // Keep them up high — within the top third
-      c.y = 80 + Math.random() * Math.max(60, height * 0.18);
-      // Slow varied horizontal drift; small downward component so taller
-      // ones don't all overlap perfectly.
-      c.vx = -(8 + Math.random() * 14);
-      c.vy = (Math.random() - 0.5) * 2;
-      clouds.push(c);
+      const scale = 0.8 + Math.random() * 0.55;
+      const cloud: Cloud = {
+        ax: width + 200 + i * (380 + Math.random() * 220),
+        ay: 90 + Math.random() * Math.max(60, height * 0.18),
+        vx: -(10 + Math.random() * 12),
+        vy: 0,
+        radius: 0,
+      };
+      seedCloud(i, cloud, droplets, scale);
+      clouds.push(cloud);
     }
+
+    // Fluid interaction parameters
+    const H = 34; // smoothing radius (px) for neighbor influence
+    const H2 = H * H;
+    const REPULSION = 520; // pressure-like push when too close
+    const VISCOSITY = 0.18; // velocity smoothing toward neighbors
+    const COHESION = 1.6; // spring back to home offset
+    const DAMPING = 1.6; // velocity drag
+    const ROT_DAMP = 1.2;
+
+    // Spatial hash for neighbor queries
+    const cellSize = H;
+    const grid = new Map<number, number[]>();
+    const cellKey = (cx: number, cy: number) => cx * 73856093 ^ cy * 19349663;
 
     let raf = 0;
     let last = performance.now();
     let t = 0;
 
     const render = (now: number) => {
-      const dt = Math.min(0.05, (now - last) / 1000);
+      let dt = (now - last) / 1000;
       last = now;
+      if (dt > 0.05) dt = 0.05;
       t += dt;
 
+      // Advance cloud anchors (wind) and wrap.
+      for (const c of clouds) {
+        c.ax += c.vx * dt;
+        c.ay += c.vy * dt;
+        if (c.ax + c.radius < -50) {
+          c.ax = width + 200 + Math.random() * 400;
+          c.ay = 90 + Math.random() * Math.max(60, height * 0.18);
+          c.vx = -(10 + Math.random() * 12);
+          // teleport droplets so they don't streak across the screen
+          for (const d of droplets) {
+            if (d.cloud === clouds.indexOf(c)) {
+              d.x = c.ax + d.hx;
+              d.y = c.ay + d.hy;
+              d.vx = 0;
+              d.vy = 0;
+            }
+          }
+        }
+      }
+
+      // Build spatial hash
+      grid.clear();
+      for (let i = 0; i < droplets.length; i++) {
+        const d = droplets[i];
+        const cx = Math.floor(d.x / cellSize);
+        const cy = Math.floor(d.y / cellSize);
+        const k = cellKey(cx, cy);
+        let bucket = grid.get(k);
+        if (!bucket) {
+          bucket = [];
+          grid.set(k, bucket);
+        }
+        bucket.push(i);
+      }
+
+      // Accumulate fluid forces
+      const ax = new Float32Array(droplets.length);
+      const ay = new Float32Array(droplets.length);
+      const vxAvg = new Float32Array(droplets.length);
+      const vyAvg = new Float32Array(droplets.length);
+      const wSum = new Float32Array(droplets.length);
+
+      for (let i = 0; i < droplets.length; i++) {
+        const d = droplets[i];
+        const cx = Math.floor(d.x / cellSize);
+        const cy = Math.floor(d.y / cellSize);
+        for (let oy = -1; oy <= 1; oy++) {
+          for (let ox = -1; ox <= 1; ox++) {
+            const bucket = grid.get(cellKey(cx + ox, cy + oy));
+            if (!bucket) continue;
+            for (let bi = 0; bi < bucket.length; bi++) {
+              const j = bucket[bi];
+              if (j <= i) continue;
+              const o = droplets[j];
+              const dx = o.x - d.x;
+              const dy = o.y - d.y;
+              const d2 = dx * dx + dy * dy;
+              if (d2 >= H2 || d2 < 0.001) continue;
+              const dist = Math.sqrt(d2);
+              const w = 1 - dist / H; // 0..1
+              // repulsion (Newton's 3rd law)
+              const f = (REPULSION * w * w) / dist;
+              const fx = dx * f;
+              const fy = dy * f;
+              ax[i] -= fx;
+              ay[i] -= fy;
+              ax[j] += fx;
+              ay[j] += fy;
+              // viscosity accumulators
+              vxAvg[i] += o.vx * w;
+              vyAvg[i] += o.vy * w;
+              vxAvg[j] += d.vx * w;
+              vyAvg[j] += d.vy * w;
+              wSum[i] += w;
+              wSum[j] += w;
+            }
+          }
+        }
+      }
+
+      // Integrate
+      for (let i = 0; i < droplets.length; i++) {
+        const d = droplets[i];
+        const c = clouds[d.cloud];
+
+        // Cohesion: spring back toward home offset within the cloud, so
+        // the cloud retains its silhouette while drifting.
+        const tx = c.ax + d.hx;
+        const ty = c.ay + d.hy;
+        const sx = (tx - d.x) * COHESION;
+        const sy = (ty - d.y) * COHESION;
+
+        let axi = ax[i] + sx;
+        let ayi = ay[i] + sy;
+
+        // Subtle turbulence (curl-noise-ish) so neighbours swirl gently.
+        const tNoiseX =
+          Math.sin(d.x * 0.012 + t * 0.7 + d.cloud) +
+          Math.cos(d.y * 0.013 - t * 0.5);
+        const tNoiseY =
+          Math.cos(d.x * 0.011 - t * 0.6 + d.cloud * 1.3) +
+          Math.sin(d.y * 0.014 + t * 0.8);
+        axi += tNoiseX * 14;
+        ayi += tNoiseY * 10;
+
+        d.vx += axi * dt;
+        d.vy += ayi * dt;
+
+        // Viscosity: blend toward neighbour-averaged velocity.
+        if (wSum[i] > 0) {
+          const avgVx = vxAvg[i] / wSum[i];
+          const avgVy = vyAvg[i] / wSum[i];
+          d.vx += (avgVx - d.vx) * Math.min(1, VISCOSITY);
+          d.vy += (avgVy - d.vy) * Math.min(1, VISCOSITY);
+        }
+
+        // Damping
+        const damp = Math.exp(-DAMPING * dt);
+        d.vx *= damp;
+        d.vy *= damp;
+
+        // Carry along the cloud's wind so droplets drift with it.
+        d.x += (d.vx + c.vx) * dt;
+        d.y += (d.vy + c.vy) * dt;
+
+        // Rotation eases toward velocity direction
+        const speed = Math.hypot(d.vx, d.vy);
+        if (speed > 8) {
+          const targetRot = Math.atan2(d.vy, d.vx);
+          let diff = targetRot - d.rot;
+          while (diff > Math.PI) diff -= 2 * Math.PI;
+          while (diff < -Math.PI) diff += 2 * Math.PI;
+          d.rotVel += diff * 1.5 * dt;
+        }
+        d.rotVel *= Math.exp(-ROT_DAMP * dt);
+        d.rot += d.rotVel * dt;
+      }
+
+      // Render
       ctx.clearRect(0, 0, width, height);
       ctx.textBaseline = "middle";
       ctx.textAlign = "center";
       const fg = getComputedStyle(canvas).color || "#111";
+      ctx.fillStyle = fg;
 
-      for (const cloud of clouds) {
-        cloud.x += cloud.vx * dt;
-        cloud.y += cloud.vy * dt;
-
-        // Keep clouds up top — softly pull toward a band in the upper area.
-        const topBandTarget = 80 + (cloud.bobPhase % 1) * Math.max(40, height * 0.12);
-        cloud.y += (topBandTarget - cloud.y) * (1 - Math.exp(-dt * 0.15));
-
-        // Once fully past the left edge, wrap back to the right.
-        if (cloud.x + cloud.maxOx < -50) {
-          cloud.x = width + 200 + Math.random() * 400;
-          cloud.y = 80 + Math.random() * Math.max(60, height * 0.18);
-          cloud.vx = -(8 + Math.random() * 14);
-        }
-
-        const bobY = Math.sin(t * cloud.bobFreq + cloud.bobPhase) * cloud.bobAmp;
-
-        for (let i = 0; i < cloud.particles.length; i++) {
-          const p = cloud.particles[i];
-          const bob = Math.sin(t * p.freq + p.phase) * p.amp;
-          const driftX = Math.sin(t * p.driftFreqX + p.driftPhaseX) * p.driftAmpX;
-          const driftY = Math.cos(t * p.driftFreqY + p.driftPhaseY) * p.driftAmpY;
-
-          const x = cloud.x + p.ox + driftX;
-          const y = cloud.y + p.oy + bob + bobY + driftY;
-
-          const rotation =
-            p.rot +
-            p.rotSpeed * t +
-            Math.sin(t * (p.driftFreqX * 0.8) + p.rotPhase) * p.rotAmp;
-
-          ctx.save();
-          ctx.translate(x, y);
-          ctx.rotate(rotation);
-          ctx.globalAlpha = p.alpha;
-          ctx.fillStyle = fg;
-          ctx.font = `bold ${p.size.toFixed(1)}px Arial, sans-serif`;
-          ctx.fillText(p.char, 0, 0);
-          ctx.restore();
-        }
+      for (let i = 0; i < droplets.length; i++) {
+        const d = droplets[i];
+        ctx.save();
+        ctx.translate(d.x, d.y);
+        ctx.rotate(d.rot);
+        ctx.globalAlpha = d.alpha;
+        ctx.font = `bold ${d.size.toFixed(1)}px Arial, sans-serif`;
+        ctx.fillText(d.char, 0, 0);
+        ctx.restore();
       }
       ctx.globalAlpha = 1;
 
