@@ -232,7 +232,7 @@ function ExperimentsPage() {
     <div className="relative min-h-[calc(100vh-3.5rem)] bg-background text-foreground">
       <div
         aria-label="Human-Coded"
-        className="absolute top-4 left-4 z-10 select-none pointer-events-none font-normal leading-[0.95] tracking-tight text-foreground"
+        className="absolute top-4 left-4 z-10 select-none pointer-events-none font-black leading-[0.95] tracking-tight text-foreground"
         style={{
           fontFamily:
             'Garet, "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif',
