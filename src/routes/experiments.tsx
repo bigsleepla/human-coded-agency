@@ -240,14 +240,14 @@ function ExperimentsPage() {
         }}
       >
         <div
-          className="text-[30px]"
+          className="text-[90px]"
           style={{ fontStyle: "italic", fontWeight: 900 }}
         >
-          <span style={{ marginRight: "2px" }}>|</span>HUMAN
+          <span style={{ marginRight: "6px" }}>|</span>HUMAN
         </div>
         <div
-          className="text-[30px]"
-          style={{ fontWeight: 900, marginLeft: "14px" }}
+          className="text-[90px]"
+          style={{ fontWeight: 900, marginLeft: "42px" }}
         >
           -CODED
         </div>
