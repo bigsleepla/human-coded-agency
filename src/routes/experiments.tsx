@@ -530,15 +530,15 @@ function ExperimentsPage() {
         const c = clouds[i];
         const targetVx = c.slowed ? -1.5 : -14;
         c.vx += (targetVx - c.vx) * 0.02 * dt * 5;
-        const targetY = 80 + (i % 2) * 25;
-        c.vy += (targetY - c.ay) * 0.02;
-        c.vy *= Math.exp(-2.4 * dt);
-        if (c.ay < 60) {
-          c.ay = 60;
+        const targetY = 40 + (i % 2) * 20;
+        c.vy += (targetY - c.ay) * 0.05;
+        c.vy *= Math.exp(-3.2 * dt);
+        if (c.ay < 25) {
+          c.ay = 25;
           if (c.vy < 0) c.vy = 0;
         }
-        if (c.ay > 140) {
-          c.ay = 140;
+        if (c.ay > 80) {
+          c.ay = 80;
           if (c.vy > 0) c.vy = 0;
         }
 
