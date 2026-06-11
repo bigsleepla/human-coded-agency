@@ -23,6 +23,7 @@ type Droplet = {
   alpha: number;
   rot: number;
   rotVel: number;
+  edge: number; // 0 = core, 1 = outer fringe — loosens cohesion + fades alpha
 };
 
 type Cloud = {
