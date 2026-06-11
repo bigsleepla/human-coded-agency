@@ -657,6 +657,9 @@ function ExperimentsPage() {
           // damping so gravity dominates and drops accelerate as they fall.
           d.vx *= Math.exp(-3.5 * dt);
           d.vy *= Math.exp(-0.12 * dt);
+          // Rain never reverses — clamp upward motion so a droplet that
+          // started falling can only continue downward.
+          if (d.vy < 0) d.vy = 0;
 
           d.x += d.vx * dt;
           d.y += d.vy * dt;
