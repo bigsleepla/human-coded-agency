@@ -8,13 +8,29 @@ export const Route = createFileRoute("/experiments")({
 // Each character is a droplet of water. Together, their pairwise
 // interactions (repulsion + viscosity + cohesion back to a slowly drifting
 // home) cause them to behave like a fluid body — a cloud.
+type Tendril = {
+  // Anchor point on the cloud body where the strand roots.
+  rootX: number;
+  rootY: number;
+  // Position along the strand, 0 at the root, 1 at the tip.
+  t: number;
+  // Strand-wide identifier so droplets on the same strand share a wave.
+  strand: number;
+  // Length of this strand (px) and lateral wave parameters.
+  length: number;
+  waveFreq: number;
+  wavePhase: number;
+  waveAmp: number;
+};
+
 type Droplet = {
   x: number;
   y: number;
   vx: number;
   vy: number;
   // Home offset relative to its parent cloud's anchor — gives the cloud
-  // its overall silhouette while letting droplets jostle freely.
+  // its overall silhouette while letting droplets jostle freely. For
+  // tendril droplets this is recomputed each frame from `tendril`.
   hx: number;
   hy: number;
   cloud: number; // index of parent cloud
@@ -24,6 +40,7 @@ type Droplet = {
   rot: number;
   rotVel: number;
   edge: number; // 0 = core, 1 = outer fringe — loosens cohesion + fades alpha
+  tendril?: Tendril;
 };
 
 type Cloud = {
