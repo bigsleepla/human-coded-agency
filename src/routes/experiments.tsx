@@ -217,6 +217,9 @@ function ExperimentsPage() {
         vx: -(6 + Math.random() * 28),
         vy: (Math.random() - 0.5) * 4,
         radius: 0,
+        slowed: false,
+        rainIndex: 0,
+        rainTimer: 0,
       };
       seedCloud(i, cloud, droplets, scale);
       clouds.push(cloud);
