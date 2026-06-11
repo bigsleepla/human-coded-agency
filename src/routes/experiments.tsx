@@ -446,9 +446,55 @@ function ExperimentsPage() {
       }
 
       // Integrate
+      const GRAVITY = 620; // px/s^2 — rain accelerates as it falls
       for (let i = 0; i < droplets.length; i++) {
         const d = droplets[i];
         const c = clouds[d.cloud];
+
+        if (d.falling) {
+          // Free-falling rain: no cohesion, no cloud wind, gravity-driven,
+          // but still participates in fluid repulsion/viscosity via ax/ay.
+          let axi = ax[i];
+          let ayi = ay[i] + GRAVITY;
+          // Mild lateral turbulence for organic streaks.
+          axi += Math.sin(d.y * 0.02 + t * 1.3 + d.cloud) * 20;
+
+          d.vx += axi * dt;
+          d.vy += ayi * dt;
+
+          if (wSum[i] > 0) {
+            const avgVx = vxAvg[i] / wSum[i];
+            const avgVy = vyAvg[i] / wSum[i];
+            // Weaker viscosity blend so drops keep their momentum.
+            d.vx += (avgVx - d.vx) * 0.06;
+            d.vy += (avgVy - d.vy) * 0.06;
+          }
+
+          // Very light damping — air resistance, but momentum dominates.
+          const damp = Math.exp(-0.15 * dt);
+          d.vx *= damp;
+          d.vy *= damp;
+
+          d.x += d.vx * dt;
+          d.y += d.vy * dt;
+
+          // Rotate with motion so characters tumble as they fall.
+          const targetRot = Math.atan2(d.vy, d.vx) - Math.PI / 2;
+          let diff = targetRot - d.rot;
+          while (diff > Math.PI) diff -= 2 * Math.PI;
+          while (diff < -Math.PI) diff += 2 * Math.PI;
+          d.rotVel += diff * 1.2 * dt;
+          d.rotVel *= Math.exp(-ROT_DAMP * dt);
+          d.rot += d.rotVel * dt;
+
+          // Fade near the bottom so removal isn't abrupt.
+          const base = d.baseAlpha ?? 0.95;
+          const fadeStart = height - 120;
+          d.alpha = d.y > fadeStart
+            ? base * Math.max(0, 1 - (d.y - fadeStart) / 120)
+            : base;
+          continue;
+        }
 
         // Cohesion: spring back toward home offset. Edge droplets are
         // bound far more loosely — they trail off as vapor, get caught up
@@ -533,6 +579,15 @@ function ExperimentsPage() {
         d.rotVel *= Math.exp(-ROT_DAMP * dt);
         d.rot += d.rotVel * dt;
       }
+
+      // Cull rain that has fallen off the bottom of the screen.
+      for (let i = droplets.length - 1; i >= 0; i--) {
+        const d = droplets[i];
+        if (d.falling && d.y > height + 40) {
+          droplets.splice(i, 1);
+        }
+      }
+
 
       // Render
       ctx.clearRect(0, 0, width, height);
