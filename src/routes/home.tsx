@@ -334,13 +334,41 @@ function ExperimentsPage() {
       const sig = `${quoteRef.current}|${quoteAuthorRef.current}|${width}|${height}`;
       if (sig === slotsSig && slots.length) return;
       slotsSig = sig;
-      slots = layoutQuote();
-      // Drop any in-flight (unsettled) rain so we don't double-fill slots.
+      const newSlots = layoutQuote();
+      // Reassign already-settled rain to the new slot positions by char so
+      // resizing the viewport doesn't leave settled glyphs frozen at their
+      // old coordinates.
+      const settledByChar = new Map<string, Droplet[]>();
+      for (const d of droplets) {
+        if (d.falling && d.settled) {
+          const arr = settledByChar.get(d.char);
+          if (arr) arr.push(d);
+          else settledByChar.set(d.char, [d]);
+        }
+      }
+      for (const slot of newSlots) {
+        const arr = settledByChar.get(slot.char);
+        if (arr && arr.length) {
+          const d = arr.shift()!;
+          d.x = slot.x;
+          d.y = slot.y;
+          d.targetX = slot.x;
+          d.targetY = slot.y;
+          d.size = slotFontSize;
+          slot.claimed = true;
+        }
+      }
+      // Drop any settled droplets that no longer have a matching slot, and
+      // any in-flight rain (it would otherwise double-fill slots).
+      const orphan = new Set<Droplet>();
+      for (const arr of settledByChar.values()) for (const d of arr) orphan.add(d);
       for (let i = droplets.length - 1; i >= 0; i--) {
-        if (droplets[i].falling && !droplets[i].settled) {
+        const d = droplets[i];
+        if (orphan.has(d) || (d.falling && !d.settled)) {
           droplets.splice(i, 1);
         }
       }
+      slots = newSlots;
     };
 
 
@@ -491,6 +519,20 @@ function ExperimentsPage() {
         }
       }
 
+      // Rain only begins once every quote-bearing droplet has entered the
+      // visible frame, so the quote can't start materializing while half its
+      // characters are still drifting in off-screen.
+      let allQuoteOnScreen = quoteReadyRef.current;
+      if (allQuoteOnScreen) {
+        for (let i = 0; i < droplets.length; i++) {
+          const d = droplets[i];
+          if (d.quoteGlyph && !d.falling && d.x > width) {
+            allQuoteOnScreen = false;
+            break;
+          }
+        }
+      }
+
       // Cloud-cloud anchor physics: soft elastic collisions so cloud bodies
       // bounce / glance off each other while their droplets intermingle and
       // appear to merge. Anchors carry "momentum" via vx/vy.
@@ -544,7 +586,7 @@ function ExperimentsPage() {
         // slot. Slots can fill out of order so the quote materializes in
         // a natural, scattered way. Rain begins as soon as the cloud is
         // visible on screen and the quote is ready.
-        if (c.ax < width + 50 && quoteReadyRef.current) {
+        if (allQuoteOnScreen) {
           c.rainTimer += dt;
           const interval = 0.05;
           while (c.rainTimer >= interval) {
