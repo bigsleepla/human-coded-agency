@@ -1,9 +1,13 @@
 import { Link } from "@tanstack/react-router";
 
-const linkClass =
-  "text-white/85 hover:text-white text-sm md:text-base tracking-wide uppercase transition-colors";
+type Variant = "light" | "dark";
 
-export function SiteNav() {
+export function SiteNav({ variant = "light" }: { variant?: Variant }) {
+  const linkClass =
+    variant === "dark"
+      ? "text-foreground/75 hover:text-foreground text-sm md:text-base tracking-wide uppercase transition-colors"
+      : "text-white/85 hover:text-white text-sm md:text-base tracking-wide uppercase transition-colors";
+
   return (
     <nav
       aria-label="Primary"

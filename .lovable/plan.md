@@ -1,72 +1,39 @@
-# Human-Coded Agency Portal
+## Goal
 
-A dark-mode web app for content agencies to manage sponsored editorial submissions to Reddit, backed by your existing Supabase project (`leayhimwhbsoxwmtgbqf`).
+Create a reusable page template for all non-home routes (About, Contact, Privacy, ToS, etc.) that reuses the same logo + nav as the home page, but in a black-on-off-white color scheme with no cloud animation and no quote.
 
-## Backend setup
+## What to build
 
-- Use **your own Supabase project** (not Lovable Cloud). I'll create a browser-side Supabase client in `src/integrations/supabase/client.ts` using the URL + anon key you provided.
-- All data access happens client-side via supabase-js with RLS enforcing per-agency scoping (assumed already configured on your tables).
-- Realtime subscriptions for `slot_notes` and `slot_bookmarks`.
-- No server functions / no service-role key in the app.
+1. **Make `SiteNav` color-aware.** Add a `variant?: "light" | "dark"` prop (default `"light"` = current white text for the home page). `"dark"` renders the links in near-black (`text-foreground/85 hover:text-foreground`) so they read on a light background.
 
-> Note: I'll assume the existing tables have RLS policies scoping rows to `auth.uid()` via `agencies.supabase_user_id` / `agency_members.user_id`. If a query returns empty unexpectedly, that's where to look.
+2. **Extract the logo into `SiteLogo`** (`src/components/site-logo.tsx`). Same markup currently inlined in `home.tsx` (the `|HUMAN` / `-CODED` Link). Accept the same `variant` prop — `"light"` keeps `text-white`, `"dark"` uses `text-foreground` (near-black).
 
-## Routes
+3. **Create `PageShell`** (`src/components/page-shell.tsx`):
+   - Off-white background (new token `--page-surface: oklch(0.97 0.005 85)` in `src/styles.css`, applied via inline style or a utility) so it's a warm off-white, not pure `#fff`.
+   - Renders `<SiteLogo variant="dark" />` and `<SiteNav variant="dark" />` in the same absolute positions used on home (top-left logo, top-right nav, mobile nav under logo).
+   - Reserves vertical space under the logo so page content doesn't collide with it (roughly `pt-[220px] md:pt-[180px]` — matches current logo height).
+   - Renders `{children}` inside a centered `<main>` container.
+   - Includes `<CookieBanner />` at the bottom so it's consistent with home.
 
-```
-/auth                       Login + Signup (email/password)
-/onboarding                 First-login agency profile (brand name + Reddit username)
-/_authenticated/
-  board                     Slot Board (kanban, drag between 4 columns)
-  browse                    Slot Browser (all open slots, bookmark + share)
-  submissions               Submissions list table
-  submissions/new           Submission form (optional ?slotId= prefill)
-  submissions/$id           Edit a draft submission
-  team                      Team Settings (admin only)
-/s/$token                   Public shared-slot view (via slot_share_links)
-```
+4. **Update home (`src/routes/home.tsx`)** to consume `<SiteLogo variant="light" />` instead of the inlined logo markup. Cloud canvas + quote behavior unchanged. No visual change on home.
 
-Auth guard uses the integration-managed `_authenticated` layout pattern. After login, if no `agencies` row exists for the user, redirect to `/onboarding`.
+5. **Convert one page as the reference** — `src/routes/about.tsx` — to use `<PageShell>`, dropping its current ad-hoc `<header>` with the `← Human-Coded` back link. Other routes (contact, privacy, tos) can be migrated in a follow-up; this turn is just the template + about as the proof.
 
-## Pages
+## Out of scope
 
-1. **Auth** — Email/password sign-in + sign-up with `emailRedirectTo: window.location.origin`.
-2. **Onboarding** — One-time form, inserts into `agencies { supabase_user_id, brand_name, reddit_username }` and creates a matching `agency_members` row with role `admin`.
-3. **Slot Board** — Kanban with columns Watching / In Progress / Submitted / Closed reading `slot_bookmarks` joined with `slots` and `slot_activity` (for heat). Cards show topic, subreddit, deadline, heat badge (gray/blue/yellow/red by score). Drag-and-drop via `@dnd-kit/core` updates `slot_bookmarks.stage`. Realtime keeps it in sync across the team.
-4. **Slot Browser** — Table of open slots from `slots`. Bookmark button inserts into `slot_bookmarks` (stage = `watching`). Share button inserts into `slot_share_links`, copies `/s/<token>` to clipboard.
-5. **Slot Workspace** — Slide-over (shadcn `Sheet`) opened from board/browser. Tabs: Details, Notes (live via Realtime, shows Reddit username + timestamp), and a "Start Submission" button → `/submissions/new?slotId=...`.
-6. **Submission Form** — Slot pre-selected, brand pre-filled. Author rows (name + Reddit URL) with add/remove. Big textarea for content. Optional publish date + engagement window. Save Draft / Submit buttons set `status` accordingly.
-7. **Submissions List** — Table with status badges, click drafts to edit.
-8. **Team Settings** — Admin-only. Lists `agency_members` with roles. Invite via `supabase.auth.admin.inviteUserByEmail` — **this requires the service role and won't work from the browser**. See "Open question" below.
-
-## Layout & design
-
-- Dark mode default (set `class="dark"` on `<html>`).
-- Sidebar nav (shadcn `Sidebar`): Slot Board, Browse Slots, Submissions, Team Settings — icons from lucide-react.
-- Top bar: brand name + avatar with Reddit-username initials.
-- Tailwind, minimal motion, neutral palette with a single accent. Heat badges are the only saturated color.
+- No changes to the home page's cloud/quote behavior (the user said those features are off "for the template", meaning they shouldn't appear on the new template — not that they should be removed from home).
+- No migration of contact/privacy/tos yet — confirm the look on About first, then roll out.
 
 ## Technical notes
 
-- New deps: `@supabase/supabase-js`, `@dnd-kit/core`, `@dnd-kit/sortable`.
-- Auth state hook subscribes to `onAuthStateChange`; router context carries `{ user, agency }`.
-- Realtime: one channel per slot for notes; one channel for the agency's bookmarks on the board.
-- Forms validated with `zod` + react-hook-form (already in template).
-- All colors via semantic tokens in `src/styles.css`; no raw color classes in components.
+- `--page-surface` added in `src/styles.css` under `:root` so it's reusable.
+- `SiteNav` and `SiteLogo` keep their absolute positioning so PageShell doesn't need to reimplement layout; PageShell just adds top padding for the content area.
+- No routing, data, or auth changes.
 
-## Open question
-
-**Team invites:** `supabase.auth.admin.inviteUserByEmail` requires the **service role key**, which cannot live in the browser. Three options:
-
-1. **Skip auto-invites for v1** — admins add a member by entering an email + role, which creates a pending `agency_members` row; the invitee signs up normally and gets linked on first login. Simplest, no server.
-2. **Use a Supabase Edge Function in your project** with the service role — I'd write the function code for you to deploy.
-3. **Enable Lovable Cloud just for a tiny server function** — adds a second Supabase project, probably overkill given you already have one.
-
-I'll go with **option 1** unless you say otherwise.
-
-## Out of scope for v1
-
-- Verifying the Reddit username actually exists.
-- Editing slots themselves (the spec only mentions reading them).
-- Notifications beyond live note updates.
-- Mobile-optimized drag-and-drop (kanban will work on desktop primarily).
+```text
+PageShell
+├── SiteLogo  variant="dark"   (absolute top-left)
+├── SiteNav   variant="dark"   (absolute top-right, mobile under logo)
+├── <main>    children          (padded so it clears the logo)
+└── CookieBanner
+```
