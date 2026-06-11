@@ -376,12 +376,18 @@ function ExperimentsPage() {
       // a slot waits until the cloud happens to roll the needed glyph.
       if (charPoolRef.current.length) {
         const pool = charPoolRef.current;
-        const shimmerRate = 0.6; // ~60% of droplets re-roll per second
-        const k = Math.max(1, Math.floor(droplets.length * shimmerRate * dt));
+        // Each droplet re-rolls on average ~6x/sec → a visibly churning
+        // cloud of glyphs. Use Math.round so dt=16ms still produces a
+        // meaningful batch instead of flooring to zero.
+        const shimmerRate = 6;
+        const k = Math.max(
+          1,
+          Math.round(droplets.length * shimmerRate * dt),
+        );
         for (let n = 0; n < k; n++) {
           const idx = Math.floor(Math.random() * droplets.length);
           const d = droplets[idx];
-          if (!d.falling && !d.tendril) {
+          if (!d.falling) {
             d.char = pool[Math.floor(Math.random() * pool.length)];
           }
         }
