@@ -519,6 +519,20 @@ function ExperimentsPage() {
         }
       }
 
+      // Rain only begins once every quote-bearing droplet has entered the
+      // visible frame, so the quote can't start materializing while half its
+      // characters are still drifting in off-screen.
+      let allQuoteOnScreen = quoteReadyRef.current;
+      if (allQuoteOnScreen) {
+        for (let i = 0; i < droplets.length; i++) {
+          const d = droplets[i];
+          if (d.quoteGlyph && !d.falling && d.x > width) {
+            allQuoteOnScreen = false;
+            break;
+          }
+        }
+      }
+
       // Cloud-cloud anchor physics: soft elastic collisions so cloud bodies
       // bounce / glance off each other while their droplets intermingle and
       // appear to merge. Anchors carry "momentum" via vx/vy.
