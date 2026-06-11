@@ -60,7 +60,6 @@ type Cloud = {
   vx: number; // wind velocity
   vy: number;
   radius: number; // for wrap bookkeeping
-  slowed: boolean; // true once cloud has blown into ~40% of the page
   rainIndex: number; // next character of the quote to drop
   rainTimer: number; // seconds accumulator for drop cadence
 };
@@ -354,7 +353,6 @@ function ExperimentsPage() {
         vx: -(6 + Math.random() * 28),
         vy: (Math.random() - 0.5) * 4,
         radius: 0,
-        slowed: false,
         rainIndex: 0,
         rainTimer: 0,
       };
@@ -474,7 +472,6 @@ function ExperimentsPage() {
           c.ay = 15 + Math.random() * 15;
           c.vx = -(6 + Math.random() * 28);
           c.vy = (Math.random() - 0.5) * 4;
-          c.slowed = false;
           c.rainIndex = 0;
           c.rainTimer = 0;
           // teleport non-falling droplets so they don't streak across the screen
@@ -486,10 +483,6 @@ function ExperimentsPage() {
               d.vy = 0;
             }
           }
-        }
-        // Cloud has blown into ~40% of the page → slow it down and start raining.
-        if (!c.slowed && c.ax < width * 0.6) {
-          c.slowed = true;
         }
       }
 
@@ -525,10 +518,8 @@ function ExperimentsPage() {
             }
           }
         }
-        // Keep clouds drifting leftward; once "slowed" they nearly stall so
-        // the rain falls from a near-stationary cloud body.
         const c = clouds[i];
-        const targetVx = c.slowed ? -1.5 : -14;
+        const targetVx = -14;
         c.vx += (targetVx - c.vx) * 0.02 * dt * 5;
         const targetY = 18 + (i % 2) * 12;
         c.vy += (targetY - c.ay) * 0.05;
