@@ -38,11 +38,13 @@ export function CookieBanner() {
 
   if (!open) return null;
 
+  const close = () => setOpen(false);
+
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 px-4 pb-4">
-      <div className="mx-auto max-w-3xl rounded-xl border border-white/15 bg-black/80 p-4 text-white shadow-2xl backdrop-blur">
+    <div className="fixed inset-x-0 bottom-0 z-50">
+      <div className="border-t border-white/15 bg-black/80 p-4 text-white shadow-2xl backdrop-blur">
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-          <div className="text-sm leading-relaxed text-white/85">
+          <div className="text-sm leading-relaxed text-white/85 pr-6">
             We use strictly necessary cookies to run this site. With your
             consent, we may also use analytics and marketing cookies. You can
             opt out at any time. We do not knowingly collect data from anyone
@@ -56,6 +58,13 @@ export function CookieBanner() {
             </Link>
             .
           </div>
+          <button
+            onClick={close}
+            className="absolute top-3 right-3 rounded-full p-1 text-white/60 hover:bg-white/10 hover:text-white transition-colors"
+            aria-label="Close"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
           <div className="flex shrink-0 flex-wrap items-center gap-2">
             <Button
               variant="ghost"
