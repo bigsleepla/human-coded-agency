@@ -445,11 +445,11 @@ function ExperimentsPage() {
         c.vy *= Math.exp(-0.6 * dt);
 
         // Rain spawning: once slowed, wait for one of this cloud's own
-        // droplets to happen to display the character needed by the next
-        // empty slot — then peel that droplet off the cloud and let it
-        // fall into place. Cloud droplets shimmer (re-roll their char)
-        // each frame, so the speed at which the quote forms depends on
-        // how often the cloud rolls the right glyphs.
+        // (static) droplets to be both the right glyph AND currently at
+        // the bottom of the cloud body — where rain physically drips
+        // from. As the fluid churns, matching droplets occasionally
+        // surface at the underside and fall away. Formation speed is
+        // governed by the cloud's fluid motion, not by char shuffling.
         if (c.slowed && quoteReadyRef.current) {
           c.rainTimer += dt;
           const interval = 0.05; // how often we *attempt* a claim
@@ -467,12 +467,25 @@ function ExperimentsPage() {
                 !dd.tendril &&
                 !dd.falling &&
                 dd.char === needed &&
-                dd.edge < 0.75
+                // Must be on the underside of the cloud body (below the
+                // anchor) — that's where droplets coalesce and fall.
+                dd.y > c.ay + 10
               ) {
                 matches.push(di);
               }
             }
-            if (!matches.length) break; // no match yet — wait for shimmer
+            if (!matches.length) break; // wait for fluid motion to surface one
+            // Prefer the droplet currently lowest in the cloud — the one
+            // most ready to fall.
+            let pickIdx = matches[0];
+            let pickY = droplets[pickIdx].y;
+            for (const mi of matches) {
+              if (droplets[mi].y > pickY) {
+                pickY = droplets[mi].y;
+                pickIdx = mi;
+              }
+            }
+            const pick = droplets[pickIdx];
             const pick =
               droplets[matches[Math.floor(Math.random() * matches.length)]];
             const slot = slots[nextSlot++];
