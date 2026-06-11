@@ -667,13 +667,15 @@ function ExperimentsPage() {
         d.rot += d.rotVel * dt;
       }
 
-      // Cull rain that has fallen off the bottom of the screen.
+      // Safety: cull any rain that overshoots far past the bottom (shouldn't
+      // happen since drops land at their slot, but guard against drift).
       for (let i = droplets.length - 1; i >= 0; i--) {
         const d = droplets[i];
-        if (d.falling && d.y > height + 40) {
+        if (d.falling && !d.settled && d.y > height + 80) {
           droplets.splice(i, 1);
         }
       }
+
 
 
       // Render
