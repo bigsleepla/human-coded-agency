@@ -51,6 +51,7 @@ type Droplet = {
   targetX?: number;
   targetY?: number;
   settled?: boolean;
+  quoteGlyph?: boolean;
 };
 
 type Cloud = {
@@ -216,7 +217,7 @@ function ExperimentsPage() {
         quoteAuthorRef.current = author;
         // Include the em-dash that prefixes the author line so a cloud
         // droplet can carry it; otherwise that slot can never be filled.
-        const fullText = body + " — " + author;
+        const fullText = body + (author ? ` — ${author}` : "");
         const pool: string[] = [];
         for (const ch of fullText) {
           if (ch !== " ") pool.push(ch);
@@ -395,30 +396,47 @@ function ExperimentsPage() {
         lastSeedTick = quoteSeedTickRef.current;
         const pool = charPoolRef.current;
         const needed: string[] = [];
-        for (const ch of quoteRef.current + quoteAuthorRef.current) {
+        const rainText =
+          quoteRef.current +
+          (quoteAuthorRef.current ? `—${quoteAuthorRef.current}` : "");
+        for (const ch of rainText) {
           if (ch !== " ") needed.push(ch);
         }
+        // Shuffle required glyphs so the cloud is seeded non-linearly rather
+        // than reading left-to-right inside the vapor.
+        for (let i = needed.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [needed[i], needed[j]] = [needed[j], needed[i]];
+        }
         // Eligible droplets: non-falling, non-tendril (so the cloud body
-        // visibly contains the quote chars).
+        // visibly contains the quote chars). Bias guaranteed quote glyphs
+        // toward the underside so their weight makes them rain from clouds,
+        // not appear directly in the finished quote.
         const eligible: number[] = [];
         for (let di = 0; di < droplets.length; di++) {
           const d = droplets[di];
-          if (!d.falling && !d.tendril) eligible.push(di);
+          if (!d.falling && !d.tendril) {
+            d.quoteGlyph = false;
+            eligible.push(di);
+          }
         }
-        // Shuffle eligible indices.
-        for (let i = eligible.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [eligible[i], eligible[j]] = [eligible[j], eligible[i]];
-        }
+        eligible.sort(
+          (a, b) =>
+            droplets[b].hy + Math.random() * 90 -
+            (droplets[a].hy + Math.random() * 90),
+        );
         // First, plant every needed char into a unique droplet (cycling
         // if there are fewer eligible droplets than chars).
         for (let i = 0; i < eligible.length; i++) {
           if (i < needed.length) {
-            droplets[eligible[i]].char = needed[i];
+            const d = droplets[eligible[i]];
+            d.char = needed[i];
+            d.quoteGlyph = true;
           } else if (pool.length) {
             // Remaining droplets get random pool chars.
-            droplets[eligible[i]].char =
-              pool[Math.floor(Math.random() * pool.length)];
+            const d = droplets[eligible[i]];
+            d.char = pool[Math.floor(Math.random() * pool.length)];
+            d.quoteGlyph = quoteCharSetRef.current.has(d.char);
           }
         }
       }
