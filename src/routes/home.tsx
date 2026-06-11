@@ -334,13 +334,41 @@ function ExperimentsPage() {
       const sig = `${quoteRef.current}|${quoteAuthorRef.current}|${width}|${height}`;
       if (sig === slotsSig && slots.length) return;
       slotsSig = sig;
-      slots = layoutQuote();
-      // Drop any in-flight (unsettled) rain so we don't double-fill slots.
+      const newSlots = layoutQuote();
+      // Reassign already-settled rain to the new slot positions by char so
+      // resizing the viewport doesn't leave settled glyphs frozen at their
+      // old coordinates.
+      const settledByChar = new Map<string, Droplet[]>();
+      for (const d of droplets) {
+        if (d.falling && d.settled) {
+          const arr = settledByChar.get(d.char);
+          if (arr) arr.push(d);
+          else settledByChar.set(d.char, [d]);
+        }
+      }
+      for (const slot of newSlots) {
+        const arr = settledByChar.get(slot.char);
+        if (arr && arr.length) {
+          const d = arr.shift()!;
+          d.x = slot.x;
+          d.y = slot.y;
+          d.targetX = slot.x;
+          d.targetY = slot.y;
+          d.size = slotFontSize;
+          slot.claimed = true;
+        }
+      }
+      // Drop any settled droplets that no longer have a matching slot, and
+      // any in-flight rain (it would otherwise double-fill slots).
+      const orphan = new Set<Droplet>();
+      for (const arr of settledByChar.values()) for (const d of arr) orphan.add(d);
       for (let i = droplets.length - 1; i >= 0; i--) {
-        if (droplets[i].falling && !droplets[i].settled) {
+        const d = droplets[i];
+        if (orphan.has(d) || (d.falling && !d.settled)) {
           droplets.splice(i, 1);
         }
       }
+      slots = newSlots;
     };
 
 
