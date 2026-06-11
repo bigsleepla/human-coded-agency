@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
-import icon from "@/assets/human-coded-icon.png.asset.json";
 
 export const Route = createFileRoute("/experiments")({
   component: ExperimentsPage,
@@ -231,11 +230,28 @@ function ExperimentsPage() {
 
   return (
     <div className="relative min-h-[calc(100vh-3.5rem)] bg-background text-foreground">
-      <img
-        src={icon.url}
-        alt="Human-Coded"
-        className="absolute top-4 left-4 z-10 h-[72px] w-auto select-none pointer-events-none"
-      />
+      <div
+        aria-label="Human-Coded"
+        className="absolute top-4 left-4 z-10 select-none pointer-events-none font-black leading-[0.95] tracking-tight text-foreground"
+        style={{
+          fontFamily:
+            '"Helvetica Neue", Helvetica, Arial, system-ui, sans-serif',
+          fontStretch: "condensed",
+        }}
+      >
+        <div
+          className="text-[30px]"
+          style={{ fontStyle: "italic", fontWeight: 900 }}
+        >
+          <span style={{ marginRight: "2px" }}>|</span>HUMAN
+        </div>
+        <div
+          className="text-[30px]"
+          style={{ fontWeight: 900, marginLeft: "14px" }}
+        >
+          -CODED
+        </div>
+      </div>
       <canvas
         ref={canvasRef}
         className="block w-full h-[calc(100vh-3.5rem)]"
