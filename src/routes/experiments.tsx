@@ -43,9 +43,14 @@ type Droplet = {
   rotVel: number;
   edge: number; // 0 = core, 1 = outer fringe — loosens cohesion + fades alpha
   tendril?: Tendril;
-  // Rain droplets break away from the cloud and free-fall with gravity.
+  // Rain droplets break away from the cloud and free-fall with gravity,
+  // steering toward a target slot in the laid-out quote at the bottom of
+  // the page. Once they reach the slot they settle in place.
   falling?: boolean;
   baseAlpha?: number;
+  targetX?: number;
+  targetY?: number;
+  settled?: boolean;
 };
 
 type Cloud = {
