@@ -519,17 +519,29 @@ function ExperimentsPage() {
         }
       }
 
-      // Rain only begins once every quote-bearing droplet has entered the
-      // visible frame, so the quote can't start materializing while half its
-      // characters are still drifting in off-screen.
+      // Rain only begins once every character the quote needs is represented
+      // by at least one quote-bearing droplet currently inside the visible
+      // frame — that way the rain can actually finish the quote, but we
+      // don't wait for clouds that are still drifting in far off-screen.
       let allQuoteOnScreen = quoteReadyRef.current;
       if (allQuoteOnScreen) {
-        for (let i = 0; i < droplets.length; i++) {
-          const d = droplets[i];
-          if (d.quoteGlyph && !d.falling && d.x > width) {
-            allQuoteOnScreen = false;
-            break;
+        ensureSlots();
+        const needed = new Set<string>();
+        for (const s of slots) if (!s.claimed) needed.add(s.char);
+        if (needed.size) {
+          for (let i = 0; i < droplets.length && needed.size; i++) {
+            const d = droplets[i];
+            if (
+              d.quoteGlyph &&
+              !d.falling &&
+              d.x >= 0 &&
+              d.x <= width &&
+              needed.has(d.char)
+            ) {
+              needed.delete(d.char);
+            }
           }
+          if (needed.size) allQuoteOnScreen = false;
         }
       }
 
