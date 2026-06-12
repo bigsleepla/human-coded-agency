@@ -1,14 +1,9 @@
 import { Link } from "@tanstack/react-router";
 
-type Variant = "light" | "dark" | "green";
+type Variant = "light" | "dark";
 
 export function SiteLogo({ variant = "light" }: { variant?: Variant }) {
-  const colorClass =
-    variant === "dark"
-      ? "text-foreground"
-      : variant === "green"
-        ? "text-primary"
-        : "text-white";
+  const colorClass = variant === "dark" ? "text-foreground" : "text-white";
   return (
     <Link
       to="/home"
