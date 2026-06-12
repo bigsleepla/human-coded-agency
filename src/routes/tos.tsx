@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { PageShell } from "@/components/page-shell";
 
 export const Route = createFileRoute("/tos")({
   head: () => ({
@@ -15,13 +16,8 @@ export const Route = createFileRoute("/tos")({
 
 function TosPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border px-10 py-6">
-        <Link to="/home" className="text-sm uppercase tracking-wide text-muted-foreground hover:text-foreground">
-          ← Human-Coded
-        </Link>
-      </header>
-      <main className="mx-auto max-w-3xl px-6 py-16">
+    <PageShell>
+      <div className="mx-auto max-w-3xl">
         <h1 className="text-4xl font-semibold tracking-tight">Terms of Service</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Last updated: {new Date().getFullYear()}
@@ -68,7 +64,7 @@ function TosPage() {
         <p className="mt-2 text-muted-foreground">
           info@humancoded.com — Human-Coded, Los Angeles, CA.
         </p>
-      </main>
-    </div>
+      </div>
+    </PageShell>
   );
 }
