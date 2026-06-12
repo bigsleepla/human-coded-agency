@@ -7,7 +7,7 @@ export function SiteLogo({ variant = "light" }: { variant?: Variant }) {
     variant === "dark"
       ? "text-foreground"
       : variant === "green"
-        ? "text-green-500"
+        ? "text-primary"
         : "text-white";
   return (
     <Link
