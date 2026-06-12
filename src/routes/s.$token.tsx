@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { heatBadgeClass } from "@/lib/heat";
+import { PageShell } from "@/components/page-shell";
 
 export const Route = createFileRoute("/s/$token")({
   component: SharedSlotPage,
@@ -47,18 +48,23 @@ function SharedSlotPage() {
   }, [token]);
 
   if (loading) {
-    return <div className="flex min-h-screen items-center justify-center text-muted-foreground">Loading…</div>;
+    return (
+      <PageShell>
+        <div className="text-muted-foreground">Loading…</div>
+      </PageShell>
+    );
   }
   if (error || !slot) {
     return (
-      <div className="flex min-h-screen items-center justify-center px-4 text-center">
-        <p className="text-muted-foreground">{error ?? "Slot not found."}</p>
-      </div>
+      <PageShell>
+        <p className="text-center text-muted-foreground">{error ?? "Slot not found."}</p>
+      </PageShell>
     );
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-12">
+    <PageShell>
+      <div className="mx-auto max-w-2xl">
       <div className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">
         Shared slot
       </div>
@@ -88,6 +94,7 @@ function SharedSlotPage() {
           <p className="whitespace-pre-wrap text-sm">{slot.notes}</p>
         </section>
       )}
-    </div>
+      </div>
+    </PageShell>
   );
 }

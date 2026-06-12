@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Building2 } from "lucide-react";
 import { toast } from "sonner";
+import { PageShell } from "@/components/page-shell";
 
 export const Route = createFileRoute("/onboarding")({
   component: OnboardingPage,
@@ -72,9 +73,8 @@ function OnboardingPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center px-4">
-      <div className="pointer-events-none absolute inset-0 bg-geo-dots opacity-50 [mask-image:radial-gradient(ellipse_at_center,black_10%,transparent_70%)]" />
-      <div className="relative w-full max-w-md">
+    <PageShell>
+      <div className="mx-auto w-full max-w-md">
         <div className="mb-6 flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
             <Building2 className="h-6 w-6" strokeWidth={2.25} />
@@ -123,6 +123,6 @@ function OnboardingPage() {
           </Button>
         </form>
       </div>
-    </div>
+    </PageShell>
   );
 }
