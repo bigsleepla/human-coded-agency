@@ -934,7 +934,7 @@ function ExperimentsPage() {
         background: `linear-gradient(to bottom, oklch(0.25 0.005 85), var(--background))`,
       }}
     >
-      <SiteLogo variant="light" />
+      <SiteLogo variant="green" />
       <SiteNav />
       <CookieBanner />
       <canvas
