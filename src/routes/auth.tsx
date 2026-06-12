@@ -1,4 +1,4 @@
-import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -6,11 +6,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Sparkles, LogIn, UserPlus } from "lucide-react";
+import { LogIn, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { PageShell } from "@/components/page-shell";
 
 export const Route = createFileRoute("/auth")({
+  head: () => ({
+    meta: [
+      { title: "Sign in — Human-Coded" },
+      { name: "description", content: "Sign in or create an account for the Human-Coded agency portal." },
+      { property: "og:title", content: "Sign in — Human-Coded" },
+      { property: "og:description", content: "Sign in or create an account for the Human-Coded agency portal." },
+    ],
+  }),
   component: AuthPage,
 });
 
@@ -53,24 +62,25 @@ function AuthPage() {
   ];
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center px-4">
-      <div className="pointer-events-none absolute inset-0 bg-geo-grid opacity-60 [mask-image:radial-gradient(ellipse_at_center,black_10%,transparent_70%)]" />
-      <div className="relative w-full max-w-md">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
-            <Sparkles className="h-6 w-6" strokeWidth={2.25} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Human-Coded</h1>
-            <p className="text-sm text-muted-foreground">
-              Agency portal for sponsored Reddit editorial.
-            </p>
-          </div>
-        </div>
+    <PageShell>
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-12">
+        <div className="max-w-3xl">
+          <h1 className="text-4xl md:text-5xl font-semibold tracking-tight">
+            {mode === "signin" ? "Sign in" : "Create account"}
+          </h1>
 
-        <div className="rounded-3xl border border-border bg-card p-6 shadow-sm md:p-8">
-          <div className="mb-5">
-            <Label className="mb-3 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <p className="mt-8 text-2xl md:text-3xl font-medium leading-snug">
+            Agency portal for sponsored Reddit editorial.
+          </p>
+
+          <p className="mt-6 text-lg text-muted-foreground leading-relaxed">
+            {mode === "signin"
+              ? "Welcome back. Sign in to access your dashboard."
+              : "New here? Create an account to get started."}
+          </p>
+
+          <section className="mt-16 border-t border-border pt-12 max-w-md">
+            <Label className="mb-3 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               How are you getting in?
             </Label>
             <RadioGroup
@@ -111,43 +121,68 @@ function AuthPage() {
                 );
               })}
             </RadioGroup>
+
+            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="h-11 rounded-xl"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="h-11 rounded-xl"
+                />
+              </div>
+              <Button type="submit" className="h-11 w-full" disabled={busy}>
+                {busy
+                  ? mode === "signin"
+                    ? "Signing in…"
+                    : "Creating…"
+                  : mode === "signin"
+                    ? "Sign in"
+                    : "Create account"}
+              </Button>
+            </form>
+          </section>
+        </div>
+
+        <aside className="lg:sticky lg:top-10 lg:self-start lg:max-h-[calc(100vh-5rem)] lg:overflow-auto space-y-6 lg:border-l lg:border-border lg:pl-8">
+          <div className="space-y-2">
+            <p className="text-foreground font-medium">
+              {mode === "signin" ? "New to Human-Coded?" : "Already have an account?"}
+            </p>
+            <button
+              type="button"
+              onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+              className="text-primary hover:underline font-medium block text-left"
+            >
+              {mode === "signin" ? "Create an account →" : "Sign in instead →"}
+            </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="h-11 rounded-xl"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="h-11 rounded-xl"
-              />
-            </div>
-            <Button type="submit" className="h-11 w-full" disabled={busy}>
-              {busy
-                ? mode === "signin"
-                  ? "Signing in…"
-                  : "Creating…"
-                : mode === "signin"
-                  ? "Sign in"
-                  : "Create account"}
-            </Button>
-          </form>
-        </div>
+          <div className="space-y-2">
+            <p className="text-foreground font-medium">Want to learn more?</p>
+            <Link to="/about" className="text-primary hover:underline font-medium block">
+              About Human-Coded →
+            </Link>
+            <Link to="/contact" className="text-primary hover:underline font-medium block">
+              Contact us →
+            </Link>
+          </div>
+        </aside>
       </div>
-    </div>
+    </PageShell>
   );
 }
