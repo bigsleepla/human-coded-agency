@@ -14,6 +14,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as BoardRouteImport } from './routes/board'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AppRouteImport } from './routes/_app'
@@ -21,7 +22,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as STokenRouteImport } from './routes/s.$token'
 import { Route as AppTeamRouteImport } from './routes/_app.team'
 import { Route as AppBrowseRouteImport } from './routes/_app.browse'
-import { Route as AppBoardRouteImport } from './routes/_app.board'
 import { Route as AppSubmissionsIndexRouteImport } from './routes/_app.submissions.index'
 import { Route as AppSubmissionsNewRouteImport } from './routes/_app.submissions.new'
 import { Route as AppSubmissionsIdRouteImport } from './routes/_app.submissions.$id'
@@ -49,6 +49,11 @@ const HomeRoute = HomeRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BoardRoute = BoardRouteImport.update({
+  id: '/board',
+  path: '/board',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -85,11 +90,6 @@ const AppBrowseRoute = AppBrowseRouteImport.update({
   path: '/browse',
   getParentRoute: () => AppRoute,
 } as any)
-const AppBoardRoute = AppBoardRouteImport.update({
-  id: '/board',
-  path: '/board',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppSubmissionsIndexRoute = AppSubmissionsIndexRouteImport.update({
   id: '/submissions/',
   path: '/submissions/',
@@ -110,12 +110,12 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/board': typeof BoardRoute
   '/contact': typeof ContactRoute
   '/home': typeof HomeRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/tos': typeof TosRoute
-  '/board': typeof AppBoardRoute
   '/browse': typeof AppBrowseRoute
   '/team': typeof AppTeamRoute
   '/s/$token': typeof STokenRoute
@@ -127,12 +127,12 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/board': typeof BoardRoute
   '/contact': typeof ContactRoute
   '/home': typeof HomeRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/tos': typeof TosRoute
-  '/board': typeof AppBoardRoute
   '/browse': typeof AppBrowseRoute
   '/team': typeof AppTeamRoute
   '/s/$token': typeof STokenRoute
@@ -146,12 +146,12 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/board': typeof BoardRoute
   '/contact': typeof ContactRoute
   '/home': typeof HomeRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
   '/tos': typeof TosRoute
-  '/_app/board': typeof AppBoardRoute
   '/_app/browse': typeof AppBrowseRoute
   '/_app/team': typeof AppTeamRoute
   '/s/$token': typeof STokenRoute
@@ -165,12 +165,12 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/auth'
+    | '/board'
     | '/contact'
     | '/home'
     | '/onboarding'
     | '/privacy'
     | '/tos'
-    | '/board'
     | '/browse'
     | '/team'
     | '/s/$token'
@@ -182,12 +182,12 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/auth'
+    | '/board'
     | '/contact'
     | '/home'
     | '/onboarding'
     | '/privacy'
     | '/tos'
-    | '/board'
     | '/browse'
     | '/team'
     | '/s/$token'
@@ -200,12 +200,12 @@ export interface FileRouteTypes {
     | '/_app'
     | '/about'
     | '/auth'
+    | '/board'
     | '/contact'
     | '/home'
     | '/onboarding'
     | '/privacy'
     | '/tos'
-    | '/_app/board'
     | '/_app/browse'
     | '/_app/team'
     | '/s/$token'
@@ -219,6 +219,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
+  BoardRoute: typeof BoardRoute
   ContactRoute: typeof ContactRoute
   HomeRoute: typeof HomeRoute
   OnboardingRoute: typeof OnboardingRoute
@@ -262,6 +263,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/board': {
+      id: '/board'
+      path: '/board'
+      fullPath: '/board'
+      preLoaderRoute: typeof BoardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -313,13 +321,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBrowseRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/board': {
-      id: '/_app/board'
-      path: '/board'
-      fullPath: '/board'
-      preLoaderRoute: typeof AppBoardRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/submissions/': {
       id: '/_app/submissions/'
       path: '/submissions'
@@ -345,7 +346,6 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
-  AppBoardRoute: typeof AppBoardRoute
   AppBrowseRoute: typeof AppBrowseRoute
   AppTeamRoute: typeof AppTeamRoute
   AppSubmissionsIdRoute: typeof AppSubmissionsIdRoute
@@ -354,7 +354,6 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppBoardRoute: AppBoardRoute,
   AppBrowseRoute: AppBrowseRoute,
   AppTeamRoute: AppTeamRoute,
   AppSubmissionsIdRoute: AppSubmissionsIdRoute,
@@ -369,6 +368,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
+  BoardRoute: BoardRoute,
   ContactRoute: ContactRoute,
   HomeRoute: HomeRoute,
   OnboardingRoute: OnboardingRoute,
@@ -379,3 +379,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
