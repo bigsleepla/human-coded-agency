@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { heatBadgeClass } from "@/lib/heat";
+import { PageShell } from "@/components/page-shell";
 
 export const Route = createFileRoute("/s/$token")({
   component: SharedSlotPage,
