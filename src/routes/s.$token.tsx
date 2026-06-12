@@ -94,6 +94,7 @@ function SharedSlotPage() {
           <p className="whitespace-pre-wrap text-sm">{slot.notes}</p>
         </section>
       )}
-    </div>
+      </div>
+    </PageShell>
   );
 }
