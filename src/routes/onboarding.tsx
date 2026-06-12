@@ -123,6 +123,6 @@ function OnboardingPage() {
           </Button>
         </form>
       </div>
-    </div>
+    </PageShell>
   );
 }
