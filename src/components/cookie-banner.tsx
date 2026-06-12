@@ -42,7 +42,7 @@ export function CookieBanner() {
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-50">
-      <div className="border-t border-white/15 bg-black/80 p-4 text-white shadow-2xl backdrop-blur">
+      <div className="relative border-t border-white/15 bg-black/80 p-4 text-white shadow-2xl backdrop-blur">
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div className="text-sm leading-relaxed text-white/85 pr-6">
             We use strictly necessary cookies to run this site. With your
@@ -65,7 +65,7 @@ export function CookieBanner() {
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
           </button>
-          <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <div className="flex shrink-0 flex-wrap items-center gap-2 md:pr-10">
             <Button
               variant="ghost"
               size="sm"
