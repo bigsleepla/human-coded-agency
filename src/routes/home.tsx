@@ -980,21 +980,23 @@ function ExperimentsPage() {
 
   return (
     <div
-      className="relative min-h-screen text-foreground flex flex-col"
+      className="relative h-screen w-full overflow-hidden text-foreground"
       style={{
         background: `linear-gradient(to bottom, oklch(0.25 0.005 85), var(--background))`,
       }}
     >
-      <SiteLogo variant="light" />
-      <SiteNav />
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 block h-full w-full z-0"
+      />
+      <div className="relative z-10">
+        <SiteLogo variant="light" />
+        <SiteNav />
+      </div>
+      <div className="absolute bottom-0 left-0 right-0 z-10">
+        <SiteFooter />
+      </div>
       <CookieBanner />
-      <main className="flex-1 min-h-0">
-        <canvas
-          ref={canvasRef}
-          className="block w-full h-full"
-        />
-      </main>
-      <SiteFooter />
     </div>
   );
 }
