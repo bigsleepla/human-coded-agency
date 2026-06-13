@@ -1,10 +1,12 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef } from "react";
 import { getQuoteOfTheDay } from "@/lib/quotes.functions";
 import { CookieBanner } from "@/components/cookie-banner";
 import { SiteNav } from "@/components/site-nav";
 import { SiteLogo } from "@/components/site-logo";
+import { SiteFooter } from "@/components/site-footer";
+
 
 export const Route = createFileRoute("/home")({
   component: ExperimentsPage,
@@ -972,14 +974,8 @@ function ExperimentsPage() {
         ref={canvasRef}
         className="block w-full h-[calc(100vh-3.5rem)] flex-1"
       />
-      <footer className="w-full py-6 text-center">
-        <p className="text-white/80 text-sm">
-          &copy; 2026 Human-Coded.{" "}
-          <Link to="/privacy" className="text-white/90 hover:text-white underline underline-offset-2 transition-colors">
-            Privacy Policy
-          </Link>
-        </p>
-      </footer>
+      <SiteFooter />
+
     </div>
   );
 }
