@@ -88,8 +88,7 @@ function PrivacyPage() {
 
         <h2 className="mt-8 text-xl font-semibold">9. Contact</h2>
         <p className="mt-2 text-muted-foreground">
-          Questions or data requests: info@humancoded.app, Human-Coded, Los
-          Angeles, CA.
+          Questions or data requests: info@humancoded.app.
         </p>
       </div>
     </PageShell>
