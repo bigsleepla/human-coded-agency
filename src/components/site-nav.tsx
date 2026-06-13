@@ -8,6 +8,11 @@ export function SiteNav({ variant = "light" }: { variant?: Variant }) {
       ? "text-foreground/75 hover:text-foreground text-sm md:text-base tracking-wide uppercase transition-colors"
       : "text-white/85 hover:text-white text-sm md:text-base tracking-wide uppercase transition-colors";
 
+  const comingSoonClass =
+    variant === "dark"
+      ? "text-foreground/25 text-sm md:text-base tracking-wide uppercase cursor-not-allowed"
+      : "text-white/25 text-sm md:text-base tracking-wide uppercase cursor-not-allowed";
+
   return (
     <nav
       aria-label="Primary"
@@ -28,6 +33,12 @@ export function SiteNav({ variant = "light" }: { variant?: Variant }) {
       >
         Reddit
       </a>
+      <span className={comingSoonClass} title="Coming soon">
+        LinkedIn
+      </span>
+      <span className={comingSoonClass} title="Coming soon">
+        Discord
+      </span>
       <Link to="/auth" className={linkClass}>
         Portal
       </Link>
