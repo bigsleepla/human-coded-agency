@@ -20,6 +20,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as WriteTokenRouteImport } from './routes/write.$token'
 import { Route as STokenRouteImport } from './routes/s.$token'
 import { Route as AppTeamRouteImport } from './routes/_app.team'
 import { Route as AppModRouteImport } from './routes/_app.mod'
@@ -82,6 +83,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WriteTokenRoute = WriteTokenRouteImport.update({
+  id: '/write/$token',
+  path: '/write/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const STokenRoute = STokenRouteImport.update({
   id: '/s/$token',
   path: '/s/$token',
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/mod': typeof AppModRoute
   '/team': typeof AppTeamRoute
   '/s/$token': typeof STokenRoute
+  '/write/$token': typeof WriteTokenRoute
   '/submissions/$id': typeof AppSubmissionsIdRoute
   '/submissions/new': typeof AppSubmissionsNewRoute
   '/submissions/': typeof AppSubmissionsIndexRoute
@@ -152,6 +159,7 @@ export interface FileRoutesByTo {
   '/mod': typeof AppModRoute
   '/team': typeof AppTeamRoute
   '/s/$token': typeof STokenRoute
+  '/write/$token': typeof WriteTokenRoute
   '/submissions/$id': typeof AppSubmissionsIdRoute
   '/submissions/new': typeof AppSubmissionsNewRoute
   '/submissions': typeof AppSubmissionsIndexRoute
@@ -173,6 +181,7 @@ export interface FileRoutesById {
   '/_app/mod': typeof AppModRoute
   '/_app/team': typeof AppTeamRoute
   '/s/$token': typeof STokenRoute
+  '/write/$token': typeof WriteTokenRoute
   '/_app/submissions/$id': typeof AppSubmissionsIdRoute
   '/_app/submissions/new': typeof AppSubmissionsNewRoute
   '/_app/submissions/': typeof AppSubmissionsIndexRoute
@@ -194,6 +203,7 @@ export interface FileRouteTypes {
     | '/mod'
     | '/team'
     | '/s/$token'
+    | '/write/$token'
     | '/submissions/$id'
     | '/submissions/new'
     | '/submissions/'
@@ -213,6 +223,7 @@ export interface FileRouteTypes {
     | '/mod'
     | '/team'
     | '/s/$token'
+    | '/write/$token'
     | '/submissions/$id'
     | '/submissions/new'
     | '/submissions'
@@ -233,6 +244,7 @@ export interface FileRouteTypes {
     | '/_app/mod'
     | '/_app/team'
     | '/s/$token'
+    | '/write/$token'
     | '/_app/submissions/$id'
     | '/_app/submissions/new'
     | '/_app/submissions/'
@@ -251,6 +263,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TosRoute: typeof TosRoute
   STokenRoute: typeof STokenRoute
+  WriteTokenRoute: typeof WriteTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -330,6 +343,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/write/$token': {
+      id: '/write/$token'
+      path: '/write/$token'
+      fullPath: '/write/$token'
+      preLoaderRoute: typeof WriteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/s/$token': {
@@ -417,7 +437,18 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TosRoute: TosRoute,
   STokenRoute: STokenRoute,
+  WriteTokenRoute: WriteTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
