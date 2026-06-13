@@ -23,6 +23,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "Manage sponsored editorial submissions to Reddit communities.",
       },
+      { property: "og:title", content: "Human-Coded — Agency Portal" },
+      { name: "twitter:title", content: "Human-Coded — Agency Portal" },
+      { name: "description", content: "Web app for content agencies to manage sponsored Reddit editorial submissions." },
+      { property: "og:description", content: "Web app for content agencies to manage sponsored Reddit editorial submissions." },
+      { name: "twitter:description", content: "Web app for content agencies to manage sponsored Reddit editorial submissions." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b77fb726-c1a9-4a30-b43a-0d88d9aafeaa/id-preview-8fbc4580--95f0cba9-7e2e-4aca-a4d4-5738daa35332.lovable.app-1781334457377.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/b77fb726-c1a9-4a30-b43a-0d88d9aafeaa/id-preview-8fbc4580--95f0cba9-7e2e-4aca-a4d4-5738daa35332.lovable.app-1781334457377.png" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:type", content: "website" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
