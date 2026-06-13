@@ -17,8 +17,8 @@ export function SiteNav({ variant = "light" }: { variant?: Variant }) {
           'Garet, "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif',
       }}
     >
-      <Link to="/auth" className={linkClass}>
-        Portal
+      <Link to="/about" className={linkClass}>
+        About
       </Link>
       <a
         href="https://developers.reddit.com/apps/human-coded"
@@ -28,8 +28,8 @@ export function SiteNav({ variant = "light" }: { variant?: Variant }) {
       >
         Reddit
       </a>
-      <Link to="/about" className={linkClass}>
-        About
+      <Link to="/auth" className={linkClass}>
+        Portal
       </Link>
       <Link to="/contact" className={linkClass}>
         Contact
