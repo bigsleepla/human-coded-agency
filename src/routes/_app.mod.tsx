@@ -200,6 +200,87 @@ function ProposalCard({ proposal, onUpdate }: { proposal: Proposal; onUpdate: (p
   );
 }
 
+function SubmissionReviewCard({ sub, onUpdate }: { sub: SubmissionRow; onUpdate: (s: SubmissionRow) => void }) {
+  const [busy, setBusy] = useState(false);
+  const [feedback, setFeedback] = useState(sub.mod_feedback ?? "");
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const act = async (status: "approved" | "rejected") => {
+    setBusy(true);
+    const { data, error } = await supabase
+      .from("submissions" as never)
+      .update({ status, mod_feedback: feedback || null, updated_at: new Date().toISOString() } as never)
+      .eq("id", sub.id)
+      .select()
+      .single();
+    if (error) { setErr(error.message); setBusy(false); return; }
+    onUpdate({ ...sub, ...(data as Partial<SubmissionRow>) });
+    setBusy(false);
+  };
+
+  const isPending = sub.status === "submitted" || sub.status === "under_review";
+
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-5 space-y-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold">{sub.title || "Untitled"}</h3>
+          <p className="text-xs text-gray-500 mt-0.5">{sub.brand_name}</p>
+        </div>
+        <span className={`inline-flex text-xs px-2 py-0.5 rounded-full font-medium ${
+          sub.status === "submitted" ? "bg-sky-100 text-sky-700" :
+          sub.status === "under_review" ? "bg-amber-100 text-amber-700" :
+          sub.status === "approved" ? "bg-green-100 text-green-700" :
+          "bg-red-100 text-red-600"
+        }`}>{sub.status.replace("_", " ")}</span>
+      </div>
+
+      {sub.content && (
+        <div className="rounded border border-gray-100 bg-gray-50 p-3 max-h-48 overflow-y-auto">
+          <pre className="text-xs text-gray-700 whitespace-pre-wrap font-mono leading-relaxed">{sub.content}</pre>
+        </div>
+      )}
+
+      {isPending && (
+        <div className="pt-3 border-t border-gray-100 space-y-3">
+          {showFeedback ? (
+            <div className="space-y-2">
+              <textarea
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                placeholder="Optional feedback for the author…"
+                rows={3}
+                className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <div className="flex gap-2">
+                <button type="button" disabled={busy} onClick={() => act("approved")}
+                  className="px-3 py-1.5 rounded bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50">
+                  {busy ? "…" : "Approve & publish"}
+                </button>
+                <button type="button" disabled={busy} onClick={() => act("rejected")}
+                  className="px-3 py-1.5 rounded border border-red-300 text-red-600 text-sm font-medium hover:bg-red-50 disabled:opacity-50">
+                  {busy ? "…" : "Request revisions"}
+                </button>
+                <button type="button" onClick={() => setShowFeedback(false)}
+                  className="px-3 py-1.5 rounded border border-gray-300 text-sm text-gray-600 hover:bg-gray-50">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button type="button" onClick={() => setShowFeedback(true)}
+              className="px-3 py-1.5 rounded bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90">
+              Review
+            </button>
+          )}
+          {err && <p className="text-xs text-red-600">{err}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ModPage() {
   const { user, loading } = useAuth();
   const [proposals, setProposals] = useState<Proposal[]>([]);
