@@ -9,6 +9,24 @@ import { SiteFooter } from "@/components/site-footer";
 
 
 export const Route = createFileRoute("/home")({
+  head: () => ({
+    meta: [
+      { title: "Human-Coded — Peer-reviewed sponsored editorial on Reddit" },
+      {
+        name: "description",
+        content:
+          "Human-Coded publishes peer-reviewed, expert-authored sponsored posts natively on Reddit, with the community's editors at the gate.",
+      },
+      { property: "og:title", content: "Human-Coded — Peer-reviewed sponsored editorial on Reddit" },
+      {
+        property: "og:description",
+        content:
+          "Peer-reviewed, expert-authored sponsored posts published natively on Reddit.",
+      },
+      { property: "og:url", content: "https://humancoded.app/home" },
+    ],
+    links: [{ rel: "canonical", href: "https://humancoded.app/home" }],
+  }),
   component: ExperimentsPage,
 });
 

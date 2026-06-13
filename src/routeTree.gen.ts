@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TosRouteImport } from './routes/tos'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as HomeRouteImport } from './routes/home'
@@ -29,6 +30,11 @@ import { Route as AppSubmissionsIdRouteImport } from './routes/_app.submissions.
 const TosRoute = TosRouteImport.update({
   id: '/tos',
   path: '/tos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -115,6 +121,7 @@ export interface FileRoutesByFullPath {
   '/home': typeof HomeRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/tos': typeof TosRoute
   '/browse': typeof AppBrowseRoute
   '/team': typeof AppTeamRoute
@@ -132,6 +139,7 @@ export interface FileRoutesByTo {
   '/home': typeof HomeRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/tos': typeof TosRoute
   '/browse': typeof AppBrowseRoute
   '/team': typeof AppTeamRoute
@@ -151,6 +159,7 @@ export interface FileRoutesById {
   '/home': typeof HomeRoute
   '/onboarding': typeof OnboardingRoute
   '/privacy': typeof PrivacyRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/tos': typeof TosRoute
   '/_app/browse': typeof AppBrowseRoute
   '/_app/team': typeof AppTeamRoute
@@ -170,6 +179,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/onboarding'
     | '/privacy'
+    | '/sitemap.xml'
     | '/tos'
     | '/browse'
     | '/team'
@@ -187,6 +197,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/onboarding'
     | '/privacy'
+    | '/sitemap.xml'
     | '/tos'
     | '/browse'
     | '/team'
@@ -205,6 +216,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/onboarding'
     | '/privacy'
+    | '/sitemap.xml'
     | '/tos'
     | '/_app/browse'
     | '/_app/team'
@@ -224,6 +236,7 @@ export interface RootRouteChildren {
   HomeRoute: typeof HomeRoute
   OnboardingRoute: typeof OnboardingRoute
   PrivacyRoute: typeof PrivacyRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TosRoute: typeof TosRoute
   STokenRoute: typeof STokenRoute
 }
@@ -235,6 +248,13 @@ declare module '@tanstack/react-router' {
       path: '/tos'
       fullPath: '/tos'
       preLoaderRoute: typeof TosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -373,6 +393,7 @@ const rootRouteChildren: RootRouteChildren = {
   HomeRoute: HomeRoute,
   OnboardingRoute: OnboardingRoute,
   PrivacyRoute: PrivacyRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   TosRoute: TosRoute,
   STokenRoute: STokenRoute,
 }

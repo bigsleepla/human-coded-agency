@@ -41,6 +41,7 @@ export const Route = createFileRoute("/board")({
         name: "description",
         content: "Manage your sponsored editorial slots.",
       },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
   component: BoardPage,

@@ -10,6 +10,7 @@ export const Route = createFileRoute("/privacy")({
         content:
           "How Human-Coded collects, uses, and protects personal information, including GDPR, CCPA, and COPPA rights.",
       },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
   component: PrivacyPage,

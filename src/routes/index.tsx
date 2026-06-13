@@ -2,6 +2,13 @@ import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Human-Coded" },
+      { name: "description", content: "Human-Coded agency portal." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: Index,
 });
 
