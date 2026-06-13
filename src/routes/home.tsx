@@ -544,15 +544,15 @@ function ExperimentsPage() {
           }
           // Mobile cheat: narrow viewports can't hold every quote glyph in
           // the visible clouds at once, which would block rain forever.
-          // As soon as a cloud has entered at least 30% into the screen
-          // (its leading edge has crossed 30% of the way in from the right),
+          // As soon as a cloud has entered at least 45% into the screen
+          // (its leading edge has crossed 45% of the way in from the right),
           // force-assign the still-missing glyphs to random non-falling
           // droplets inside those clouds so rain can actually start.
           if (needed.size) {
             const cloudsInside = new Set<number>();
             for (let ci = 0; ci < clouds.length; ci++) {
               const c = clouds[ci];
-              if (c.ax - c.radius <= width * 0.7) cloudsInside.add(ci);
+              if (c.ax - c.radius <= width * 0.55) cloudsInside.add(ci);
             }
             if (cloudsInside.size) {
               const eligible: number[] = [];
