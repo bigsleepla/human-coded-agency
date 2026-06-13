@@ -31,7 +31,7 @@ const emailSchema = z
   .max(255);
 
 const CARDS = [
-  { label: "Email", value: "info@humancoded.com", href: "mailto:info@humancoded.com" },
+  { label: "Email", value: "info@humancoded.app", href: "mailto:info@humancoded.app" },
   { label: "Phone", value: "555-555-5555", href: "tel:5555555555" },
   { label: "Location", value: "Los Angeles, CA" },
 ] as const;
