@@ -21,7 +21,7 @@ export function SiteNav({ variant = "light" }: { variant?: Variant }) {
         About
       </Link>
       <a
-        href="https://developers.reddit.com/apps/human-coded"
+        href="https://www.reddit.com/r/human_coded_dev/"
         target="_blank"
         rel="noopener noreferrer"
         className={linkClass}
