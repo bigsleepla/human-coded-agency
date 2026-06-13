@@ -39,6 +39,9 @@ export function SiteNav({ variant = "light" }: { variant?: Variant }) {
       <span className={comingSoonClass} title="Coming soon">
         Discord
       </span>
+      <span className={comingSoonClass} title="Coming soon">
+        Lemmy
+      </span>
       <Link to="/auth" className={linkClass}>
         Portal
       </Link>
