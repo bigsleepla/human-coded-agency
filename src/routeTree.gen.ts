@@ -22,6 +22,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as STokenRouteImport } from './routes/s.$token'
 import { Route as AppTeamRouteImport } from './routes/_app.team'
+import { Route as AppModRouteImport } from './routes/_app.mod'
 import { Route as AppBrowseRouteImport } from './routes/_app.browse'
 import { Route as AppSubmissionsIndexRouteImport } from './routes/_app.submissions.index'
 import { Route as AppSubmissionsNewRouteImport } from './routes/_app.submissions.new'
@@ -91,6 +92,11 @@ const AppTeamRoute = AppTeamRouteImport.update({
   path: '/team',
   getParentRoute: () => AppRoute,
 } as any)
+const AppModRoute = AppModRouteImport.update({
+  id: '/mod',
+  path: '/mod',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppBrowseRoute = AppBrowseRouteImport.update({
   id: '/browse',
   path: '/browse',
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/tos': typeof TosRoute
   '/browse': typeof AppBrowseRoute
+  '/mod': typeof AppModRoute
   '/team': typeof AppTeamRoute
   '/s/$token': typeof STokenRoute
   '/submissions/$id': typeof AppSubmissionsIdRoute
@@ -142,6 +149,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/tos': typeof TosRoute
   '/browse': typeof AppBrowseRoute
+  '/mod': typeof AppModRoute
   '/team': typeof AppTeamRoute
   '/s/$token': typeof STokenRoute
   '/submissions/$id': typeof AppSubmissionsIdRoute
@@ -162,6 +170,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/tos': typeof TosRoute
   '/_app/browse': typeof AppBrowseRoute
+  '/_app/mod': typeof AppModRoute
   '/_app/team': typeof AppTeamRoute
   '/s/$token': typeof STokenRoute
   '/_app/submissions/$id': typeof AppSubmissionsIdRoute
@@ -182,6 +191,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/tos'
     | '/browse'
+    | '/mod'
     | '/team'
     | '/s/$token'
     | '/submissions/$id'
@@ -200,6 +210,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/tos'
     | '/browse'
+    | '/mod'
     | '/team'
     | '/s/$token'
     | '/submissions/$id'
@@ -219,6 +230,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/tos'
     | '/_app/browse'
+    | '/_app/mod'
     | '/_app/team'
     | '/s/$token'
     | '/_app/submissions/$id'
@@ -334,6 +346,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTeamRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/mod': {
+      id: '/_app/mod'
+      path: '/mod'
+      fullPath: '/mod'
+      preLoaderRoute: typeof AppModRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/browse': {
       id: '/_app/browse'
       path: '/browse'
@@ -367,6 +386,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppBrowseRoute: typeof AppBrowseRoute
+  AppModRoute: typeof AppModRoute
   AppTeamRoute: typeof AppTeamRoute
   AppSubmissionsIdRoute: typeof AppSubmissionsIdRoute
   AppSubmissionsNewRoute: typeof AppSubmissionsNewRoute
@@ -375,6 +395,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppBrowseRoute: AppBrowseRoute,
+  AppModRoute: AppModRoute,
   AppTeamRoute: AppTeamRoute,
   AppSubmissionsIdRoute: AppSubmissionsIdRoute,
   AppSubmissionsNewRoute: AppSubmissionsNewRoute,

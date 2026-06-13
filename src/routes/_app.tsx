@@ -1,5 +1,5 @@
 import { createFileRoute, Navigate, Outlet, Link, useRouterState } from "@tanstack/react-router";
-import { Kanban, Compass, FileText, Users, LogOut } from "lucide-react";
+import { Kanban, Compass, FileText, Users, LogOut, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ const NAV = [
   { to: "/board", label: "Slot Board", icon: Kanban },
   { to: "/browse", label: "Browse Slots", icon: Compass },
   { to: "/submissions", label: "Submissions", icon: FileText },
+  { to: "/mod", label: "Mod Review", icon: ShieldCheck },
   { to: "/team", label: "Team Settings", icon: Users },
 ] as const;
 
