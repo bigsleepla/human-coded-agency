@@ -22,6 +22,17 @@ interface Proposal {
   slot?: { id: string; topic: string; subreddit: string; start_date: string; end_date: string };
 }
 
+interface SubmissionRow {
+  id: string;
+  title: string | null;
+  brand_name: string | null;
+  content: string | null;
+  status: string;
+  mod_feedback: string | null;
+  created_at: string;
+  invite_token: string | null;
+}
+
 const STATUS_COLORS: Record<ProposalStatus, string> = {
   submitted: "bg-blue-100 text-blue-700",
   shortlisted: "bg-yellow-100 text-yellow-700",
@@ -189,24 +200,113 @@ function ProposalCard({ proposal, onUpdate }: { proposal: Proposal; onUpdate: (p
   );
 }
 
+function SubmissionReviewCard({ sub, onUpdate }: { sub: SubmissionRow; onUpdate: (s: SubmissionRow) => void }) {
+  const [busy, setBusy] = useState(false);
+  const [feedback, setFeedback] = useState(sub.mod_feedback ?? "");
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const act = async (status: "approved" | "rejected") => {
+    setBusy(true);
+    const { data, error } = await supabase
+      .from("submissions" as never)
+      .update({ status, mod_feedback: feedback || null, updated_at: new Date().toISOString() } as never)
+      .eq("id", sub.id)
+      .select()
+      .single();
+    if (error) { setErr(error.message); setBusy(false); return; }
+    onUpdate({ ...sub, ...(data as Partial<SubmissionRow>) });
+    setBusy(false);
+  };
+
+  const isPending = sub.status === "submitted" || sub.status === "under_review";
+
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-5 space-y-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold">{sub.title || "Untitled"}</h3>
+          <p className="text-xs text-gray-500 mt-0.5">{sub.brand_name}</p>
+        </div>
+        <span className={`inline-flex text-xs px-2 py-0.5 rounded-full font-medium ${
+          sub.status === "submitted" ? "bg-sky-100 text-sky-700" :
+          sub.status === "under_review" ? "bg-amber-100 text-amber-700" :
+          sub.status === "approved" ? "bg-green-100 text-green-700" :
+          "bg-red-100 text-red-600"
+        }`}>{sub.status.replace("_", " ")}</span>
+      </div>
+
+      {sub.content && (
+        <div className="rounded border border-gray-100 bg-gray-50 p-3 max-h-48 overflow-y-auto">
+          <pre className="text-xs text-gray-700 whitespace-pre-wrap font-mono leading-relaxed">{sub.content}</pre>
+        </div>
+      )}
+
+      {isPending && (
+        <div className="pt-3 border-t border-gray-100 space-y-3">
+          {showFeedback ? (
+            <div className="space-y-2">
+              <textarea
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                placeholder="Optional feedback for the author…"
+                rows={3}
+                className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <div className="flex gap-2">
+                <button type="button" disabled={busy} onClick={() => act("approved")}
+                  className="px-3 py-1.5 rounded bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50">
+                  {busy ? "…" : "Approve & publish"}
+                </button>
+                <button type="button" disabled={busy} onClick={() => act("rejected")}
+                  className="px-3 py-1.5 rounded border border-red-300 text-red-600 text-sm font-medium hover:bg-red-50 disabled:opacity-50">
+                  {busy ? "…" : "Request revisions"}
+                </button>
+                <button type="button" onClick={() => setShowFeedback(false)}
+                  className="px-3 py-1.5 rounded border border-gray-300 text-sm text-gray-600 hover:bg-gray-50">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button type="button" onClick={() => setShowFeedback(true)}
+              className="px-3 py-1.5 rounded bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90">
+              Review
+            </button>
+          )}
+          {err && <p className="text-xs text-red-600">{err}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ModPage() {
   const { user, loading } = useAuth();
   const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [submissions, setSubmissions] = useState<SubmissionRow[]>([]);
   const [fetching, setFetching] = useState(true);
 
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const { data } = await supabase
+      const { data: proposalsData } = await supabase
         .from("proposals" as never)
         .select("*, slot:slots(id, topic, subreddit, start_date, end_date)")
         .order("created_at", { ascending: false });
-      setProposals((data as Proposal[] | null) ?? []);
+      setProposals((proposalsData as Proposal[] | null) ?? []);
+
+      const { data: submissionsData } = await supabase
+        .from("submissions" as never)
+        .select("*")
+        .order("created_at", { ascending: false });
+      setSubmissions((submissionsData as SubmissionRow[] | null) ?? []);
+
       setFetching(false);
     };
     void load();
 
-    const channel = supabase
+    const proposalsChannel = supabase
       .channel("proposals-mod")
       .on(
         // @ts-expect-error - realtime payload typing
@@ -227,8 +327,30 @@ function ModPage() {
       )
       .subscribe();
 
+    const submissionsChannel = supabase
+      .channel("submissions-mod")
+      .on(
+        // @ts-expect-error - realtime payload typing
+        "postgres_changes",
+        { event: "*", schema: "public", table: "submissions" },
+        (payload: { new: SubmissionRow }) => {
+          setSubmissions((prev) => {
+            const updated = payload.new;
+            const idx = prev.findIndex((s) => s.id === updated.id);
+            if (idx >= 0) {
+              const next = [...prev];
+              next[idx] = updated;
+              return next;
+            }
+            return [updated, ...prev];
+          });
+        },
+      )
+      .subscribe();
+
     return () => {
-      void supabase.removeChannel(channel);
+      void supabase.removeChannel(proposalsChannel);
+      void supabase.removeChannel(submissionsChannel);
     };
   }, [user]);
 
@@ -245,8 +367,11 @@ function ModPage() {
   const updateProposal = (updated: Proposal) =>
     setProposals((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
 
+  const updateSubmission = (updated: SubmissionRow) =>
+    setSubmissions((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-6">
+    <div className="mx-auto max-w-5xl space-y-10 p-6">
       <div>
         <h1 className="text-2xl font-semibold text-gray-900">Mod — Proposal review</h1>
         <p className="text-sm text-gray-600">Review agency proposals and issue author invites.</p>
@@ -272,6 +397,21 @@ function ModPage() {
                 ))}
               </div>
             </section>
+          ))}
+        </div>
+      )}
+
+      <div>
+        <h2 className="text-xl font-semibold text-gray-900">Submissions</h2>
+        <p className="text-sm text-gray-600 mt-1">Review author drafts and approve or request revisions.</p>
+      </div>
+
+      {submissions.length === 0 ? (
+        <p className="text-sm text-gray-500">No submissions yet.</p>
+      ) : (
+        <div className="grid gap-3">
+          {submissions.map((s) => (
+            <SubmissionReviewCard key={s.id} sub={s} onUpdate={updateSubmission} />
           ))}
         </div>
       )}
