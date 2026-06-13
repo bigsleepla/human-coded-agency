@@ -14,10 +14,10 @@ export function SiteLogo({ variant = "light" }: { variant?: Variant }) {
           'Garet, "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif',
       }}
     >
-      <div className="text-[40px] md:text-[60px] lg:text-[90px] italic">
+      <div className="text-[32px] md:text-[48px] lg:text-[72px] italic">
         <span style={{ marginRight: "6px" }}>|</span>HUMAN
       </div>
-      <div className="text-[40px] md:text-[60px] lg:text-[90px] lg:ml-[42px] ml-[18px]">
+      <div className="text-[32px] md:text-[48px] lg:text-[72px] lg:ml-[32px] ml-[14px]">
         -CODED
       </div>
     </Link>
