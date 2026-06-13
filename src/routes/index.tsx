@@ -14,7 +14,7 @@ function Index() {
       </div>
     );
   }
-  if (!user) return <Navigate to="/auth" />;
+  if (!user) return <Navigate to="/home" />;
   if (!agency) return <Navigate to="/onboarding" />;
   return <Navigate to="/board" />;
 }
