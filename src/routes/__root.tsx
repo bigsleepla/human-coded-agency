@@ -9,6 +9,9 @@ import {
 import type { ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import faviconIco from "@/assets/favicons/favicon.ico.asset.json";
+import appleTouchIcon from "@/assets/favicons/apple-touch-icon.png.asset.json";
+import icon192 from "@/assets/favicons/icon-192.png.asset.json";
 import { AuthProvider } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -35,6 +38,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "icon", href: faviconIco.url, sizes: "48x48" },
+      { rel: "shortcut icon", href: faviconIco.url },
+      { rel: "apple-touch-icon", href: appleTouchIcon.url, sizes: "180x180" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: icon192.url },
     ],
   }),
   shellComponent: RootShell,
