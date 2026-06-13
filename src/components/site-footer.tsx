@@ -5,13 +5,13 @@ type Variant = "light" | "dark";
 export function SiteFooter({ variant = "dark" }: { variant?: Variant }) {
   const textClass =
     variant === "dark"
-      ? "text-foreground/50 text-sm"
-      : "text-white/50 text-sm";
+      ? "text-muted-foreground text-sm"
+      : "text-white/80 text-sm";
 
   const linkClass =
     variant === "dark"
-      ? "text-foreground/70 hover:text-foreground underline underline-offset-2 transition-colors"
-      : "text-white/70 hover:text-white underline underline-offset-2 transition-colors";
+      ? "text-foreground/90 hover:text-foreground underline underline-offset-2 transition-colors"
+      : "text-white/90 hover:text-white underline underline-offset-2 transition-colors";
 
   return (
     <footer className="w-full py-6 text-center">

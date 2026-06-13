@@ -973,9 +973,9 @@ function ExperimentsPage() {
         className="block w-full h-[calc(100vh-3.5rem)] flex-1"
       />
       <footer className="w-full py-6 text-center">
-        <p className="text-white/50 text-sm">
+        <p className="text-white/80 text-sm">
           &copy; 2026 Human-Coded.{" "}
-          <Link to="/privacy" className="text-white/70 hover:text-white underline underline-offset-2 transition-colors">
+          <Link to="/privacy" className="text-white/90 hover:text-white underline underline-offset-2 transition-colors">
             Privacy Policy
           </Link>
         </p>
