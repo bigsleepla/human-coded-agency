@@ -5,6 +5,8 @@ import { getQuoteOfTheDay } from "@/lib/quotes.functions";
 import { CookieBanner } from "@/components/cookie-banner";
 import { SiteNav } from "@/components/site-nav";
 import { SiteLogo } from "@/components/site-logo";
+import { SiteFooter } from "@/components/site-footer";
+
 
 export const Route = createFileRoute("/home")({
   component: ExperimentsPage,
