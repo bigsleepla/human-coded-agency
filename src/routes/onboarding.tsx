@@ -29,6 +29,27 @@ function OnboardingPage() {
     setBusy(true);
     const cleanReddit = redditUsername.replace(/^u\//i, "").replace(/^\/+/, "").trim();
 
+    // Block silent takeover: if an agency already exists for this Reddit
+    // username, the new user must be invited by an existing admin rather
+    // than auto-joined as admin.
+    const { data: existing, error: lookupErr } = await supabase
+      .from("agencies")
+      .select("id, brand_name")
+      .eq("reddit_username", cleanReddit)
+      .maybeSingle();
+    if (lookupErr) {
+      toast.error(lookupErr.message);
+      setBusy(false);
+      return;
+    }
+    if (existing) {
+      toast.error(
+        `An agency (${existing.brand_name}) is already registered with u/${cleanReddit}. Ask one of its admins to invite you from Team Settings.`,
+      );
+      setBusy(false);
+      return;
+    }
+
     const { error: metaErr } = await supabase.auth.updateUser({
       data: { reddit_username: cleanReddit },
     });
@@ -38,34 +59,22 @@ function OnboardingPage() {
       return;
     }
 
-    const { data: existing } = await supabase
+    const { data: created, error } = await supabase
       .from("agencies")
-      .select("*")
-      .eq("reddit_username", cleanReddit)
-      .maybeSingle();
-
-    let agencyId = existing?.id as string | undefined;
-    if (!existing) {
-      const { data: created, error } = await supabase
-        .from("agencies")
-        .insert({ brand_name: brandName.trim(), reddit_username: cleanReddit })
-        .select()
-        .single();
-      if (error) {
-        toast.error(error.message);
-        setBusy(false);
-        return;
-      }
-      agencyId = created.id;
+      .insert({ brand_name: brandName.trim(), reddit_username: cleanReddit })
+      .select()
+      .single();
+    if (error) {
+      toast.error(error.message);
+      setBusy(false);
+      return;
     }
 
-    if (agencyId) {
-      await supabase.from("agency_members").insert({
-        agency_id: agencyId,
-        role: "admin",
-        reddit_username: cleanReddit,
-      });
-    }
+    await supabase.from("agency_members").insert({
+      agency_id: created.id,
+      role: "admin",
+      reddit_username: cleanReddit,
+    });
 
     await refreshAgency();
     toast.success("Welcome aboard.");
