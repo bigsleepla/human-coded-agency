@@ -962,7 +962,7 @@ function ExperimentsPage() {
 
   return (
     <div
-      className="relative min-h-[calc(100vh-3.5rem)] text-foreground flex flex-col"
+      className="relative min-h-screen text-foreground flex flex-col"
       style={{
         background: `linear-gradient(to bottom, oklch(0.25 0.005 85), var(--background))`,
       }}
@@ -970,12 +970,13 @@ function ExperimentsPage() {
       <SiteLogo variant="light" />
       <SiteNav />
       <CookieBanner />
-      <canvas
-        ref={canvasRef}
-        className="block w-full h-[calc(100vh-3.5rem)] flex-1"
-      />
+      <main className="flex-1 min-h-0">
+        <canvas
+          ref={canvasRef}
+          className="block w-full h-full"
+        />
+      </main>
       <SiteFooter />
-
     </div>
   );
 }
