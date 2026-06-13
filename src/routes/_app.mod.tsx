@@ -22,6 +22,17 @@ interface Proposal {
   slot?: { id: string; topic: string; subreddit: string; start_date: string; end_date: string };
 }
 
+interface SubmissionRow {
+  id: string;
+  title: string | null;
+  brand_name: string | null;
+  content: string | null;
+  status: string;
+  mod_feedback: string | null;
+  created_at: string;
+  invite_token: string | null;
+}
+
 const STATUS_COLORS: Record<ProposalStatus, string> = {
   submitted: "bg-blue-100 text-blue-700",
   shortlisted: "bg-yellow-100 text-yellow-700",
