@@ -8,15 +8,17 @@ export const Route = createFileRoute("/about")({
       {
         name: "description",
         content:
-          "Human-Coded crafts sponsored editorial for Reddit communities.",
+          "Human-Coded is the publishing agency behind the WhitePaper: peer-reviewed, expert-authored sponsored posts published natively on Reddit.",
       },
       { property: "og:title", content: "About — Human-Coded" },
       {
         property: "og:description",
         content:
-          "Human-Coded crafts sponsored editorial for Reddit communities.",
+          "The publishing agency behind the WhitePaper — applying editorial standards to sponsored content on Reddit.",
       },
+      { property: "og:url", content: "https://humancoded.app/about" },
     ],
+    links: [{ rel: "canonical", href: "https://humancoded.app/about" }],
   }),
   component: AboutPage,
 });
