@@ -10,6 +10,13 @@ import { toast } from "sonner";
 import { PageShell } from "@/components/page-shell";
 
 export const Route = createFileRoute("/onboarding")({
+  head: () => ({
+    meta: [
+      { title: "Onboarding — Human-Coded" },
+      { name: "description", content: "Set up your Human-Coded agency account." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: OnboardingPage,
 });
 

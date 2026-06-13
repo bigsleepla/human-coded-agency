@@ -19,6 +19,7 @@ export const Route = createFileRoute("/contact")({
         property: "og:description",
         content: "Get in touch with Human-Coded.",
       },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
   component: ContactPage,

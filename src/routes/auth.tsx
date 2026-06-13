@@ -18,6 +18,7 @@ export const Route = createFileRoute("/auth")({
       { name: "description", content: "Sign in or create an account for the Human-Coded agency portal." },
       { property: "og:title", content: "Sign in — Human-Coded" },
       { property: "og:description", content: "Sign in or create an account for the Human-Coded agency portal." },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
   component: AuthPage,

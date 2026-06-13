@@ -9,6 +9,7 @@ export const Route = createFileRoute("/tos")({
         name: "description",
         content: "Terms governing your use of Human-Coded.",
       },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
   component: TosPage,
