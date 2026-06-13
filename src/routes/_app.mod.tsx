@@ -284,21 +284,29 @@ function SubmissionReviewCard({ sub, onUpdate }: { sub: SubmissionRow; onUpdate:
 function ModPage() {
   const { user, loading } = useAuth();
   const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [submissions, setSubmissions] = useState<SubmissionRow[]>([]);
   const [fetching, setFetching] = useState(true);
 
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const { data } = await supabase
+      const { data: proposalsData } = await supabase
         .from("proposals" as never)
         .select("*, slot:slots(id, topic, subreddit, start_date, end_date)")
         .order("created_at", { ascending: false });
-      setProposals((data as Proposal[] | null) ?? []);
+      setProposals((proposalsData as Proposal[] | null) ?? []);
+
+      const { data: submissionsData } = await supabase
+        .from("submissions" as never)
+        .select("*")
+        .order("created_at", { ascending: false });
+      setSubmissions((submissionsData as SubmissionRow[] | null) ?? []);
+
       setFetching(false);
     };
     void load();
 
-    const channel = supabase
+    const proposalsChannel = supabase
       .channel("proposals-mod")
       .on(
         // @ts-expect-error - realtime payload typing
@@ -319,8 +327,30 @@ function ModPage() {
       )
       .subscribe();
 
+    const submissionsChannel = supabase
+      .channel("submissions-mod")
+      .on(
+        // @ts-expect-error - realtime payload typing
+        "postgres_changes",
+        { event: "*", schema: "public", table: "submissions" },
+        (payload: { new: SubmissionRow }) => {
+          setSubmissions((prev) => {
+            const updated = payload.new;
+            const idx = prev.findIndex((s) => s.id === updated.id);
+            if (idx >= 0) {
+              const next = [...prev];
+              next[idx] = updated;
+              return next;
+            }
+            return [updated, ...prev];
+          });
+        },
+      )
+      .subscribe();
+
     return () => {
-      void supabase.removeChannel(channel);
+      void supabase.removeChannel(proposalsChannel);
+      void supabase.removeChannel(submissionsChannel);
     };
   }, [user]);
 
@@ -337,8 +367,11 @@ function ModPage() {
   const updateProposal = (updated: Proposal) =>
     setProposals((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
 
+  const updateSubmission = (updated: SubmissionRow) =>
+    setSubmissions((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-6">
+    <div className="mx-auto max-w-5xl space-y-10 p-6">
       <div>
         <h1 className="text-2xl font-semibold text-gray-900">Mod — Proposal review</h1>
         <p className="text-sm text-gray-600">Review agency proposals and issue author invites.</p>
@@ -364,6 +397,21 @@ function ModPage() {
                 ))}
               </div>
             </section>
+          ))}
+        </div>
+      )}
+
+      <div>
+        <h2 className="text-xl font-semibold text-gray-900">Submissions</h2>
+        <p className="text-sm text-gray-600 mt-1">Review author drafts and approve or request revisions.</p>
+      </div>
+
+      {submissions.length === 0 ? (
+        <p className="text-sm text-gray-500">No submissions yet.</p>
+      ) : (
+        <div className="grid gap-3">
+          {submissions.map((s) => (
+            <SubmissionReviewCard key={s.id} sub={s} onUpdate={updateSubmission} />
           ))}
         </div>
       )}
