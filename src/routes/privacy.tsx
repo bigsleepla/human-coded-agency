@@ -27,7 +27,7 @@ function PrivacyPage() {
         <h2 className="mt-10 text-xl font-semibold">1. Who we are</h2>
         <p className="mt-2 text-muted-foreground">
           Human-Coded ("we", "us") operates this website and the Human-Coded
-          agency portal. Contact: info@humancoded.com.
+          agency portal. Contact: info@humancoded.app.
         </p>
 
         <h2 className="mt-8 text-xl font-semibold">2. Information we collect</h2>
@@ -60,7 +60,7 @@ function PrivacyPage() {
           information we collect, to delete it, to correct inaccurate data,
           and to opt out of the "sale" or "sharing" of personal information.
           We do not sell personal information. To exercise these rights, email
-          info@humancoded.com or use the "Reject all" option in our cookie
+          info@humancoded.app or use the "Reject all" option in our cookie
           banner.
         </p>
 
@@ -69,7 +69,7 @@ function PrivacyPage() {
           Our services are not directed to children under 13. We do not
           knowingly collect personal information from children under 13. If
           you believe a child has provided us personal data, contact
-          info@humancoded.com and we will delete it.
+          info@humancoded.app and we will delete it.
         </p>
 
         <h2 className="mt-8 text-xl font-semibold">7. Cookies and tracking</h2>
@@ -88,7 +88,7 @@ function PrivacyPage() {
 
         <h2 className="mt-8 text-xl font-semibold">9. Contact</h2>
         <p className="mt-2 text-muted-foreground">
-          Questions or data requests: info@humancoded.com, Human-Coded, Los
+          Questions or data requests: info@humancoded.app, Human-Coded, Los
           Angeles, CA.
         </p>
       </div>
