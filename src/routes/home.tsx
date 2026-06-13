@@ -542,6 +542,37 @@ function ExperimentsPage() {
               needed.delete(d.char);
             }
           }
+          // Mobile cheat: narrow viewports can't hold every quote glyph in
+          // the visible clouds at once, which would block rain forever.
+          // As soon as a cloud has entered at least 30% into the screen
+          // (its leading edge has crossed 30% of the way in from the right),
+          // force-assign the still-missing glyphs to random non-falling
+          // droplets inside those clouds so rain can actually start.
+          if (needed.size) {
+            const cloudsInside = new Set<number>();
+            for (let ci = 0; ci < clouds.length; ci++) {
+              const c = clouds[ci];
+              if (c.ax - c.radius <= width * 0.7) cloudsInside.add(ci);
+            }
+            if (cloudsInside.size) {
+              const eligible: number[] = [];
+              for (let di = 0; di < droplets.length; di++) {
+                const d = droplets[di];
+                if (!d.falling && cloudsInside.has(d.cloud)) eligible.push(di);
+              }
+              for (let i = eligible.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [eligible[i], eligible[j]] = [eligible[j], eligible[i]];
+              }
+              for (const ch of Array.from(needed)) {
+                const di = eligible.pop();
+                if (di === undefined) break;
+                droplets[di].char = ch;
+                droplets[di].quoteGlyph = true;
+                needed.delete(ch);
+              }
+            }
+          }
           if (needed.size) allQuoteOnScreen = false;
         }
       }
