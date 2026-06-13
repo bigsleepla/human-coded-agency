@@ -16,7 +16,7 @@ export function SiteNav({ variant = "light" }: { variant?: Variant }) {
   return (
     <nav
       aria-label="Primary"
-      className="absolute z-20 left-10 top-[150px] md:top-10 md:right-10 md:left-auto flex flex-wrap items-center gap-x-6 gap-y-2"
+      className="absolute z-20 left-10 top-[150px] lg:top-10 lg:right-10 lg:left-auto flex flex-wrap items-center gap-x-6 gap-y-2"
       style={{
         fontFamily:
           'Garet, "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif',
